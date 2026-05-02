@@ -31,7 +31,7 @@ export function Testimonial() {
           <div className="mt-8 flex items-center gap-5">
             <div className="h-px w-16 bg-champagne" />
             <p className="text-sm uppercase tracking-[0.28em] text-white/58">
-              Client result placeholder
+              Audrey
             </p>
           </div>
         </div>
