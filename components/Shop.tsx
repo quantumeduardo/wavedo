@@ -73,7 +73,17 @@ type ShopProps = {
 
 export function Shop({ compact = false }: ShopProps) {
   const [focusedPreview, setFocusedPreview] = useState<(typeof productPreviews)[number] | null>(null);
+  const [activePreviewIndex, setActivePreviewIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState("M");
+  const activePreview = productPreviews[activePreviewIndex];
+  const showPreviousPreview = () => {
+    setActivePreviewIndex((currentIndex) =>
+      currentIndex === 0 ? productPreviews.length - 1 : currentIndex - 1,
+    );
+  };
+  const showNextPreview = () => {
+    setActivePreviewIndex((currentIndex) => (currentIndex + 1) % productPreviews.length);
+  };
 
   useEffect(() => {
     if (!focusedPreview) {
@@ -100,34 +110,79 @@ export function Shop({ compact = false }: ShopProps) {
               Product Gallery
             </p>
             <p className="text-xs uppercase tracking-[0.24em] text-bone/34">
-              Scroll for all angles
+              {activePreview.label} / 0{productPreviews.length}
             </p>
           </div>
           {/* Replace product gallery images in the productPreviews array above. */}
-          <div className="grid gap-4 md:grid-cols-2">
-            {productPreviews.map((preview) => (
+          <div className="space-y-4">
+            <button
+              type="button"
+              onClick={() => setFocusedPreview(activePreview)}
+              className="group relative min-h-[520px] w-full overflow-hidden bg-[#030303] text-left sm:min-h-[620px]"
+              aria-label={`Zoom ${activePreview.label} product image`}
+            >
+              <Image
+                src={activePreview.src}
+                alt={activePreview.alt}
+                fill
+                unoptimized
+                className="object-contain transition duration-700 ease-out group-hover:scale-110"
+              />
+              <div className="absolute left-4 top-4 bg-black/70 px-3 py-2 text-[10px] uppercase tracking-[0.26em] text-bone/62">
+                {activePreview.label}
+              </div>
+              <div className="absolute bottom-4 right-4 border border-bone/20 bg-black/70 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-bone/58 opacity-0 transition duration-300 group-hover:opacity-100">
+                Click to Focus
+              </div>
+            </button>
+
+            <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
               <button
                 type="button"
-                key={preview.label}
-                onClick={() => setFocusedPreview(preview)}
-                className={`group relative overflow-hidden bg-[#030303] text-left ${preview.className}`}
-                aria-label={`Zoom ${preview.label} product image`}
+                onClick={showPreviousPreview}
+                className="min-h-11 border border-bone/16 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-bone/70 transition hover:border-champagne hover:text-champagne"
+                aria-label="Previous hoodie image"
               >
-                <Image
-                  src={preview.src}
-                  alt={preview.alt}
-                  fill
-                  unoptimized
-                  className="object-contain transition duration-700 ease-out group-hover:scale-110"
-                />
-                <div className="absolute left-4 top-4 bg-black/70 px-3 py-2 text-[10px] uppercase tracking-[0.26em] text-bone/62">
-                  {preview.label}
-                </div>
-                <div className="absolute bottom-4 right-4 border border-bone/20 bg-black/70 px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-bone/58 opacity-0 transition duration-300 group-hover:opacity-100">
-                  Zoom
-                </div>
+                Prev
               </button>
-            ))}
+              <div className="overflow-x-auto">
+                <div className="flex min-w-max gap-3">
+                  {productPreviews.map((preview, index) => (
+                    <button
+                      key={preview.label}
+                      type="button"
+                      onClick={() => setActivePreviewIndex(index)}
+                      className={`relative h-24 w-20 shrink-0 overflow-hidden border bg-[#030303] transition sm:h-28 sm:w-24 ${
+                        index === activePreviewIndex
+                          ? "border-champagne"
+                          : "border-bone/12 hover:border-bone/40"
+                      }`}
+                      aria-label={`Show ${preview.label} product image`}
+                      aria-current={index === activePreviewIndex}
+                    >
+                      <Image
+                        src={preview.src}
+                        alt={preview.alt}
+                        fill
+                        unoptimized
+                        className="object-cover"
+                      />
+                      <span className="absolute inset-x-0 bottom-0 bg-black/72 px-2 py-1 text-[9px] uppercase tracking-[0.16em] text-bone/70">
+                        {preview.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={showNextPreview}
+                className="min-h-11 border border-bone/16 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-bone/70 transition hover:border-champagne hover:text-champagne"
+                aria-label="Next hoodie image"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
 
