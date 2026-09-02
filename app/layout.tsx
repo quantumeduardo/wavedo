@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Wavēdo | Luxury Fitness Coaching",
+  title: "Wavēdo | Harness the Wave Within",
   description:
     "A holistic coaching system built around strength, nutrition, energy flow, and renewal.",
 };
