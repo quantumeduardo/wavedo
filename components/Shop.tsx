@@ -19,49 +19,21 @@ const productPreviews = [
     label: "Look 01",
     src: "/images/wavedo-hoodie-fitness-robot.png",
     alt: "Fitness robot model wearing the Wavēdo training hoodie",
-    className: "min-h-[820px] md:col-span-2",
   },
   {
     label: "Look 02",
     src: "/images/wavedo-hoodie-fitness-robot-walk.png",
     alt: "Fitness robot model walking in the Wavēdo training hoodie",
-    className: "min-h-[720px]",
-  },
-  {
-    label: "Look 03",
-    src: "/images/wavedo-hoodie-fitness-robot-recovery.png",
-    alt: "Fitness robot model in a recovery stance wearing the Wavēdo training hoodie",
-    className: "min-h-[720px]",
   },
   {
     label: "Front",
     src: "/images/wavedo-hoodie-front.png",
     alt: "Wavēdo paint-splatter hoodie front product image",
-    className: "min-h-[560px]",
-  },
-  {
-    label: "Angle",
-    src: "/images/wavedo-hoodie-angle.png",
-    alt: "Wavēdo paint-splatter hoodie angled product image",
-    className: "min-h-[560px]",
-  },
-  {
-    label: "Side",
-    src: "/images/wavedo-hoodie-side.png",
-    alt: "Wavēdo training hoodie side product image",
-    className: "min-h-[560px]",
   },
   {
     label: "Back",
     src: "/images/wavedo-hoodie-back.png",
     alt: "Wavēdo training hoodie back product image",
-    className: "min-h-[560px]",
-  },
-  {
-    label: "Detail",
-    src: "/images/wavedo-hoodie-detail.png",
-    alt: "Wavēdo hoodie embroidery and paint splatter detail",
-    className: "min-h-[420px] md:col-span-2",
   },
 ];
 
@@ -72,10 +44,14 @@ type ShopProps = {
 };
 
 export function Shop({ compact = false }: ShopProps) {
-  const [focusedPreview, setFocusedPreview] = useState<(typeof productPreviews)[number] | null>(null);
+  const [focusedPreviewIndex, setFocusedPreviewIndex] = useState<number | null>(null);
   const [activePreviewIndex, setActivePreviewIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState("M");
   const activePreview = productPreviews[activePreviewIndex];
+  const focusedPreview =
+    focusedPreviewIndex === null ? null : productPreviews[focusedPreviewIndex];
+  const activePreviewPosition = activePreviewIndex + 1;
+  const focusedPreviewPosition = focusedPreviewIndex === null ? 0 : focusedPreviewIndex + 1;
   const showPreviousPreview = () => {
     setActivePreviewIndex((currentIndex) =>
       currentIndex === 0 ? productPreviews.length - 1 : currentIndex - 1,
@@ -84,22 +60,48 @@ export function Shop({ compact = false }: ShopProps) {
   const showNextPreview = () => {
     setActivePreviewIndex((currentIndex) => (currentIndex + 1) % productPreviews.length);
   };
+  const showPreviousFocusedPreview = () => {
+    setFocusedPreviewIndex((currentIndex) => {
+      if (currentIndex === null) {
+        return productPreviews.length - 1;
+      }
+
+      return currentIndex === 0 ? productPreviews.length - 1 : currentIndex - 1;
+    });
+  };
+  const showNextFocusedPreview = () => {
+    setFocusedPreviewIndex((currentIndex) => {
+      if (currentIndex === null) {
+        return 0;
+      }
+
+      return (currentIndex + 1) % productPreviews.length;
+    });
+  };
 
   useEffect(() => {
-    if (!focusedPreview) {
+    if (focusedPreviewIndex === null) {
       return;
     }
 
-    const closeOnEscape = (event: KeyboardEvent) => {
+    const handleFocusedPreviewKeys = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setFocusedPreview(null);
+        setFocusedPreviewIndex(null);
+      }
+
+      if (event.key === "ArrowLeft") {
+        showPreviousFocusedPreview();
+      }
+
+      if (event.key === "ArrowRight") {
+        showNextFocusedPreview();
       }
     };
 
-    document.addEventListener("keydown", closeOnEscape);
+    document.addEventListener("keydown", handleFocusedPreviewKeys);
 
-    return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [focusedPreview]);
+    return () => document.removeEventListener("keydown", handleFocusedPreviewKeys);
+  }, [focusedPreviewIndex]);
 
   return (
     <section id="shop" className="bg-ink px-4 py-20 text-bone sm:px-6 lg:px-8 lg:py-28">
@@ -110,14 +112,14 @@ export function Shop({ compact = false }: ShopProps) {
               Product Gallery
             </p>
             <p className="text-xs uppercase tracking-[0.24em] text-bone/34">
-              {activePreview.label} / 0{productPreviews.length}
+              0{activePreviewPosition} / 0{productPreviews.length}
             </p>
           </div>
           {/* Replace product gallery images in the productPreviews array above. */}
           <div className="space-y-4">
             <button
               type="button"
-              onClick={() => setFocusedPreview(activePreview)}
+              onClick={() => setFocusedPreviewIndex(activePreviewIndex)}
               className="group relative min-h-[520px] w-full overflow-hidden bg-[#030303] text-left sm:min-h-[620px]"
               aria-label={`Zoom ${activePreview.label} product image`}
             >
@@ -286,7 +288,7 @@ export function Shop({ compact = false }: ShopProps) {
           role="dialog"
           aria-modal="true"
           aria-label={`${focusedPreview.label} focused product image`}
-          onClick={() => setFocusedPreview(null)}
+          onClick={() => setFocusedPreviewIndex(null)}
         >
           <div
             className="relative h-[88vh] w-full max-w-6xl overflow-hidden bg-[#030303]"
@@ -300,15 +302,45 @@ export function Shop({ compact = false }: ShopProps) {
               className="object-contain"
             />
             <div className="absolute left-5 top-5 bg-black/72 px-4 py-2 text-[10px] uppercase tracking-[0.28em] text-bone/70">
-              {focusedPreview.label}
+              {focusedPreview.label} / 0{focusedPreviewPosition} of 0{productPreviews.length}
             </div>
             <button
               type="button"
-              onClick={() => setFocusedPreview(null)}
+              onClick={() => setFocusedPreviewIndex(null)}
               className="absolute right-5 top-5 border border-bone/25 bg-black/72 px-4 py-2 text-xs uppercase tracking-[0.24em] text-bone transition hover:border-champagne hover:text-champagne"
             >
               Close
             </button>
+            <button
+              type="button"
+              onClick={showPreviousFocusedPreview}
+              className="absolute left-4 top-1/2 min-h-12 -translate-y-1/2 border border-bone/25 bg-black/72 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-bone transition hover:border-champagne hover:text-champagne"
+              aria-label="Previous zoomed hoodie image"
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              onClick={showNextFocusedPreview}
+              className="absolute right-4 top-1/2 min-h-12 -translate-y-1/2 border border-bone/25 bg-black/72 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-bone transition hover:border-champagne hover:text-champagne"
+              aria-label="Next zoomed hoodie image"
+            >
+              Next
+            </button>
+            <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-2 bg-black/64 px-3 py-2">
+              {productPreviews.map((preview, index) => (
+                <button
+                  key={preview.label}
+                  type="button"
+                  onClick={() => setFocusedPreviewIndex(index)}
+                  className={`h-2.5 w-8 transition ${
+                    index === focusedPreviewIndex ? "bg-champagne" : "bg-bone/24 hover:bg-bone/50"
+                  }`}
+                  aria-label={`Zoom ${preview.label}`}
+                  aria-current={index === focusedPreviewIndex}
+                />
+              ))}
+            </div>
           </div>
         </div>
       ) : null}
