@@ -18,6 +18,22 @@ body {
   margin: 0;
   background: #050505;
   color: #f7f4ee;
+  font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.font-sans {
+  font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+}
+
+.font-display {
+  font-family: "Bodoni 72", Didot, Georgia, serif;
 }
 
 ::selection {
@@ -29,4 +45,234 @@ body {
     radial-gradient(circle at 20% 10%, rgba(216, 182, 111, 0.16), transparent 26%),
     linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 36%),
     repeating-linear-gradient(115deg, rgba(216, 182, 111, 0.12) 0 1px, transparent 1px 18px);
+}
+
+@keyframes hero-drift {
+  0% {
+    transform: scale(0.98) translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: scale(1) translate3d(-0.6%, 0.3%, 0);
+  }
+
+  100% {
+    transform: scale(0.98) translate3d(0, 0, 0);
+  }
+}
+
+.animate-hero-drift {
+  animation: hero-drift 18s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.energy-flow-line {
+  position: absolute;
+  left: -18%;
+  width: 136%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(216, 182, 111, 0.12), rgba(247, 244, 238, 0.5), rgba(216, 182, 111, 0.16), transparent);
+  opacity: 0.54;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.energy-flow-line-one {
+  top: 36%;
+  animation: energy-flow 18s linear infinite;
+}
+
+.energy-flow-line-two {
+  top: 62%;
+  animation: energy-flow 24s linear infinite reverse;
+}
+
+.energy-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.energy-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 70% 22%, rgba(247, 244, 238, 0.1), transparent 22%),
+    repeating-linear-gradient(116deg, transparent 0 20px, rgba(216, 182, 111, 0.08) 20px 21px, transparent 21px 42px);
+  opacity: 0.32;
+  animation: energy-card-flow 22s linear infinite;
+  will-change: transform;
+}
+
+.energy-card > span {
+  position: relative;
+  z-index: 1;
+}
+
+.case-cylinder-scene {
+  --case-cylinder-radius: 120px;
+  min-height: 620px;
+  perspective: 1000px;
+  perspective-origin: 50% 42%;
+}
+
+.case-cylinder {
+  position: relative;
+  height: 620px;
+  transform-style: preserve-3d;
+  transition: transform 1400ms cubic-bezier(0.33, 0, 0.18, 1);
+  will-change: transform;
+}
+
+.case-cylinder-panel {
+  position: absolute;
+  left: 50%;
+  top: 36px;
+  display: flex;
+  min-height: 500px;
+  width: min(72vw, 300px);
+  margin-left: max(-36vw, -150px);
+  flex-direction: column;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  transition:
+    opacity 700ms ease,
+    filter 700ms ease;
+}
+
+.case-cylinder-panel:not(.case-cylinder-panel-active) {
+  opacity: 0.42;
+}
+
+.case-cylinder-panel-active {
+  filter: drop-shadow(0 26px 80px rgba(0, 0, 0, 0.48));
+}
+
+.case-result-card {
+  display: flex;
+  min-height: 145px;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 16px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+.case-result-card-before {
+  border: 1px solid rgba(247, 244, 238, 0.14);
+  background: rgba(11, 11, 11, 0.94);
+}
+
+.case-result-card-after {
+  border: 1px solid rgba(216, 182, 111, 0.46);
+  background: linear-gradient(145deg, rgba(216, 182, 111, 0.2), rgba(255, 255, 255, 0.035));
+}
+
+.case-cylinder-panel-active .case-result-card-after {
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.36),
+    0 0 34px rgba(216, 182, 111, 0.14);
+}
+
+.testimonial-slide {
+  animation: testimonial-slide-in 1100ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform, filter;
+}
+
+.testimonial-copy {
+  animation: testimonial-copy-in 980ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform, filter;
+}
+
+@keyframes energy-flow {
+  0% {
+    transform: translate3d(-8%, 0, 0) rotate(-5deg);
+  }
+
+  100% {
+    transform: translate3d(8%, 22px, 0) rotate(-5deg);
+  }
+}
+
+@keyframes energy-card-flow {
+  0% {
+    transform: translate3d(-6%, 0, 0);
+  }
+
+  100% {
+    transform: translate3d(6%, 0, 0);
+  }
+}
+
+@keyframes testimonial-slide-in {
+  0% {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translate3d(0, 18px, 0) scale(0.985);
+  }
+
+  70% {
+    opacity: 1;
+    filter: blur(0);
+  }
+
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes testimonial-copy-in {
+  0% {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translate3d(28px, 0, 0);
+  }
+
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-hero-drift,
+  .energy-flow-line,
+  .energy-card::before,
+  .testimonial-slide,
+  .testimonial-copy {
+    animation: none;
+  }
+
+  .case-cylinder {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .case-cylinder-scene {
+    --case-cylinder-radius: 88px;
+    min-height: 560px;
+    perspective: 760px;
+  }
+
+  .case-cylinder {
+    height: 560px;
+  }
+
+  .case-cylinder-panel {
+    min-height: 480px;
+    width: min(82vw, 280px);
+    margin-left: max(-41vw, -140px);
+  }
+
+  .case-result-card {
+    min-height: 138px;
+  }
 }

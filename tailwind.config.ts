@@ -9,13 +9,13 @@ const config: Config = {
     extend: {
       colors: {
         ink: "#050505",
-        bone: "#f6f1e8",
+        bone: "#f7f4ee",
         champagne: "#d8b66f",
-        graphite: "#171717",
+        graphite: "#0b0b0b",
       },
       fontFamily: {
-        sans: ["Inter", "Helvetica Neue", "Arial", "sans-serif"],
-        display: ["Didot", "Bodoni 72", "Georgia", "serif"],
+        sans: ["Avenir Next", "Helvetica Neue", "Arial", "sans-serif"],
+        display: ["Bodoni 72", "Didot", "Georgia", "serif"],
       },
       boxShadow: {
         gold: "0 0 40px rgba(216, 182, 111, 0.14)",
