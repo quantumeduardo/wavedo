@@ -104,14 +104,14 @@ export function Shop({ compact = false }: ShopProps) {
   }, [focusedPreviewIndex]);
 
   return (
-    <section id="shop" className="bg-ink px-4 py-20 text-bone sm:px-6 lg:px-8 lg:py-28">
+    <section id="shop" className="bg-ink px-4 py-16 text-bone sm:px-6 sm:py-20 lg:px-8 lg:py-28">
       <div className="mx-auto grid max-w-[1500px] gap-10 lg:grid-cols-[1.12fr_0.88fr] lg:items-start">
         <div>
           <div className="mb-5 flex items-center justify-between gap-4 border-b border-bone/10 pb-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-bone/48">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-bone/48 sm:tracking-[0.28em]">
               Product Gallery
             </p>
-            <p className="text-xs uppercase tracking-[0.24em] text-bone/34">
+            <p className="text-xs uppercase tracking-[0.16em] text-bone/34 sm:tracking-[0.24em]">
               0{activePreviewPosition} / 0{productPreviews.length}
             </p>
           </div>
@@ -120,7 +120,7 @@ export function Shop({ compact = false }: ShopProps) {
             <button
               type="button"
               onClick={() => setFocusedPreviewIndex(activePreviewIndex)}
-              className="group relative min-h-[520px] w-full overflow-hidden bg-[#030303] text-left sm:min-h-[620px]"
+              className="group relative min-h-[360px] w-full overflow-hidden bg-[#030303] text-left sm:min-h-[620px]"
               aria-label={`Zoom ${activePreview.label} product image`}
             >
               <Image
@@ -138,16 +138,16 @@ export function Shop({ compact = false }: ShopProps) {
               </div>
             </button>
 
-            <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
+            <div className="grid grid-cols-[1fr_1fr] items-center gap-3 sm:grid-cols-[auto_1fr_auto]">
               <button
                 type="button"
                 onClick={showPreviousPreview}
-                className="min-h-11 border border-bone/16 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-bone/70 transition hover:border-champagne hover:text-champagne"
+                className="min-h-11 border border-bone/16 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-bone/70 transition hover:border-champagne hover:text-champagne sm:tracking-[0.2em]"
                 aria-label="Previous hoodie image"
               >
                 Prev
               </button>
-              <div className="overflow-x-auto">
+              <div className="col-span-2 row-start-2 overflow-x-auto sm:col-span-1 sm:row-start-auto">
                 <div className="flex min-w-max gap-3">
                   {productPreviews.map((preview, index) => (
                     <button
@@ -179,7 +179,7 @@ export function Shop({ compact = false }: ShopProps) {
               <button
                 type="button"
                 onClick={showNextPreview}
-                className="min-h-11 border border-bone/16 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-bone/70 transition hover:border-champagne hover:text-champagne"
+                className="min-h-11 border border-bone/16 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-bone/70 transition hover:border-champagne hover:text-champagne sm:tracking-[0.2em]"
                 aria-label="Next hoodie image"
               >
                 Next
@@ -193,7 +193,7 @@ export function Shop({ compact = false }: ShopProps) {
           <p className="text-xs font-semibold uppercase tracking-[0.34em] text-bone/48">
             Shop / Hoodie
           </p>
-          <h2 className="mt-5 max-w-2xl font-display text-5xl leading-tight sm:text-6xl">
+          <h2 className="mt-5 max-w-2xl font-display text-4xl leading-tight sm:text-6xl">
             {shopItem.name}
           </h2>
           <p className="mt-5 font-display text-4xl text-bone">{shopItem.price}</p>
@@ -213,7 +213,7 @@ export function Shop({ compact = false }: ShopProps) {
           </div>
 
           <div className="mt-8">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <p className="text-xs font-semibold uppercase tracking-[0.26em] text-bone/58">
                 Select Size
               </p>
@@ -291,7 +291,7 @@ export function Shop({ compact = false }: ShopProps) {
           onClick={() => setFocusedPreviewIndex(null)}
         >
           <div
-            className="relative h-[88vh] w-full max-w-6xl overflow-hidden bg-[#030303]"
+            className="relative h-[86svh] w-full max-w-6xl overflow-hidden bg-[#030303] pb-20 sm:h-[88vh] sm:pb-0"
             onClick={(event) => event.stopPropagation()}
           >
             <Image
@@ -301,20 +301,20 @@ export function Shop({ compact = false }: ShopProps) {
               unoptimized
               className="object-contain"
             />
-            <div className="absolute left-5 top-5 bg-black/72 px-4 py-2 text-[10px] uppercase tracking-[0.28em] text-bone/70">
+            <div className="absolute left-3 top-3 max-w-[58vw] bg-black/72 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-bone/70 sm:left-5 sm:top-5 sm:max-w-none sm:px-4 sm:tracking-[0.28em]">
               {focusedPreview.label} / 0{focusedPreviewPosition} of 0{productPreviews.length}
             </div>
             <button
               type="button"
               onClick={() => setFocusedPreviewIndex(null)}
-              className="absolute right-5 top-5 border border-bone/25 bg-black/72 px-4 py-2 text-xs uppercase tracking-[0.24em] text-bone transition hover:border-champagne hover:text-champagne"
+              className="absolute right-3 top-3 border border-bone/25 bg-black/72 px-3 py-2 text-xs uppercase tracking-[0.16em] text-bone transition hover:border-champagne hover:text-champagne sm:right-5 sm:top-5 sm:px-4 sm:tracking-[0.24em]"
             >
               Close
             </button>
             <button
               type="button"
               onClick={showPreviousFocusedPreview}
-              className="absolute left-4 top-1/2 min-h-12 -translate-y-1/2 border border-bone/25 bg-black/72 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-bone transition hover:border-champagne hover:text-champagne"
+              className="absolute bottom-5 left-4 min-h-11 border border-bone/25 bg-black/72 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-bone transition hover:border-champagne hover:text-champagne sm:top-1/2 sm:min-h-12 sm:-translate-y-1/2 sm:tracking-[0.22em]"
               aria-label="Previous zoomed hoodie image"
             >
               Prev
@@ -322,12 +322,12 @@ export function Shop({ compact = false }: ShopProps) {
             <button
               type="button"
               onClick={showNextFocusedPreview}
-              className="absolute right-4 top-1/2 min-h-12 -translate-y-1/2 border border-bone/25 bg-black/72 px-4 text-xs font-semibold uppercase tracking-[0.22em] text-bone transition hover:border-champagne hover:text-champagne"
+              className="absolute bottom-5 right-4 min-h-11 border border-bone/25 bg-black/72 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-bone transition hover:border-champagne hover:text-champagne sm:top-1/2 sm:min-h-12 sm:-translate-y-1/2 sm:tracking-[0.22em]"
               aria-label="Next zoomed hoodie image"
             >
               Next
             </button>
-            <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-2 bg-black/64 px-3 py-2">
+            <div className="absolute bottom-[4.75rem] left-1/2 flex -translate-x-1/2 gap-2 bg-black/64 px-3 py-2 sm:bottom-5">
               {productPreviews.map((preview, index) => (
                 <button
                   key={preview.label}

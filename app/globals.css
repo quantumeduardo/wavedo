@@ -258,21 +258,21 @@ select {
 @media (max-width: 640px) {
   .case-cylinder-scene {
     --case-cylinder-radius: 88px;
-    min-height: 560px;
+    min-height: 500px;
     perspective: 760px;
   }
 
   .case-cylinder {
-    height: 560px;
+    height: 500px;
   }
 
   .case-cylinder-panel {
-    min-height: 480px;
-    width: min(82vw, 280px);
-    margin-left: max(-41vw, -140px);
+    min-height: 430px;
+    width: min(86vw, 280px);
+    margin-left: max(-43vw, -140px);
   }
 
   .case-result-card {
-    min-height: 138px;
+    min-height: 124px;
   }
 }

@@ -85,7 +85,7 @@ export function Testimonial() {
   }, [zoomedImage]);
 
   return (
-    <section className="energy-flow-section relative overflow-hidden bg-ink px-6 py-24 text-bone sm:px-8 lg:py-32">
+    <section className="energy-flow-section relative overflow-hidden bg-ink px-4 py-16 text-bone sm:px-8 sm:py-24 lg:py-32">
       <div className="energy-flow-line energy-flow-line-one" />
       <div className="energy-flow-line energy-flow-line-two" />
       <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.95fr_1fr] lg:items-center">
@@ -119,7 +119,7 @@ export function Testimonial() {
                 <span className="text-xs tracking-[0.32em] text-champagne">
                   Case 0{index + 1}
                 </span>
-                <span className="mt-8 block font-display text-4xl leading-tight text-bone">
+                <span className="mt-6 block font-display text-3xl leading-tight text-bone sm:mt-8 sm:text-4xl">
                   {caseStudy.name}
                 </span>
                 <span className="mt-4 block text-sm tracking-[0.22em] text-bone/52">
@@ -177,7 +177,7 @@ export function Testimonial() {
           <p className="text-xs font-semibold uppercase tracking-[0.34em] text-champagne">
             Transformation
           </p>
-          <blockquote className="mt-7 font-display text-4xl leading-tight text-bone sm:text-5xl">
+          <blockquote className="mt-7 font-display text-3xl leading-tight text-bone sm:text-5xl">
             “{activeCase.quote}”
           </blockquote>
           <div className="mt-8 flex items-center gap-5">
@@ -201,21 +201,21 @@ export function Testimonial() {
                 />
               ))}
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:gap-4">
               <button
                 type="button"
                 onClick={showPreviousCase}
-                className="min-h-11 border border-bone/18 px-5 text-xs font-semibold tracking-[0.22em] text-bone/70 transition hover:border-champagne hover:text-champagne"
+                className="min-h-11 border border-bone/18 px-4 text-xs font-semibold tracking-[0.16em] text-bone/70 transition hover:border-champagne hover:text-champagne sm:px-5 sm:tracking-[0.22em]"
               >
                 Previous
               </button>
-              <p className="text-xs tracking-[0.24em] text-bone/45">
+              <p className="text-xs tracking-[0.16em] text-bone/45 sm:tracking-[0.24em]">
                 0{activeIndex + 1} / 0{caseStudies.length}
               </p>
               <button
                 type="button"
                 onClick={showNextCase}
-                className="min-h-11 border border-champagne px-5 text-xs font-semibold tracking-[0.22em] text-champagne transition hover:bg-champagne hover:text-ink"
+                className="min-h-11 border border-champagne px-4 text-xs font-semibold tracking-[0.16em] text-champagne transition hover:bg-champagne hover:text-ink sm:px-5 sm:tracking-[0.22em]"
               >
                 Next
               </button>
@@ -226,14 +226,14 @@ export function Testimonial() {
 
       {zoomedImage ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-5 py-8 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4 py-6 backdrop-blur-sm sm:px-5 sm:py-8"
           role="dialog"
           aria-modal="true"
           aria-label={`${zoomedImage.label} transformation photo`}
           onClick={() => setZoomedImage(null)}
         >
           <div
-            className="relative h-[82vh] w-full max-w-4xl border border-champagne/30 bg-ink shadow-[0_30px_120px_rgba(0,0,0,0.7)]"
+            className="relative h-[78svh] w-full max-w-4xl border border-champagne/30 bg-ink shadow-[0_30px_120px_rgba(0,0,0,0.7)] sm:h-[82vh]"
             onClick={(event) => event.stopPropagation()}
           >
             {/* Click a transformation photo to inspect it closer. Replace sample images in public/images. */}
@@ -244,13 +244,13 @@ export function Testimonial() {
               unoptimized
               className="object-contain"
             />
-            <div className="absolute left-5 top-5 border border-champagne/40 bg-black/60 px-4 py-2 text-xs uppercase tracking-[0.28em] text-champagne">
+            <div className="absolute left-3 top-3 border border-champagne/40 bg-black/60 px-3 py-2 text-xs uppercase tracking-[0.18em] text-champagne sm:left-5 sm:top-5 sm:px-4 sm:tracking-[0.28em]">
               {zoomedImage.label}
             </div>
             <button
               type="button"
               onClick={() => setZoomedImage(null)}
-              className="absolute right-5 top-5 border border-bone/25 bg-black/70 px-4 py-2 text-xs uppercase tracking-[0.24em] text-bone transition hover:border-champagne hover:text-champagne"
+              className="absolute right-3 top-3 border border-bone/25 bg-black/70 px-3 py-2 text-xs uppercase tracking-[0.16em] text-bone transition hover:border-champagne hover:text-champagne sm:right-5 sm:top-5 sm:px-4 sm:tracking-[0.24em]"
             >
               Close
             </button>

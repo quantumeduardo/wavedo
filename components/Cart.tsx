@@ -103,14 +103,14 @@ export function Cart({ initialSize = "M" }: CartProps) {
   };
 
   return (
-    <section className="min-h-screen bg-ink px-4 py-20 text-bone sm:px-6 lg:px-8">
+    <section className="min-h-screen bg-ink px-4 py-12 text-bone sm:px-6 sm:py-20 lg:px-8">
       <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1fr_0.72fr] lg:items-start">
         <form onSubmit={submitCheckout} className="space-y-10">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.34em] text-bone/48">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-bone/48 sm:tracking-[0.34em]">
               Checkout
             </p>
-            <h1 className="mt-5 font-display text-5xl leading-tight sm:text-6xl">
+            <h1 className="mt-5 font-display text-4xl leading-tight sm:text-6xl">
               Shipping Information
             </h1>
           </div>
@@ -130,7 +130,7 @@ export function Cart({ initialSize = "M" }: CartProps) {
               ["Country", "country", "text"],
             ].map(([label, name, type]) => (
               <label key={name} className="bg-[#090909] p-5">
-                <span className="text-xs uppercase tracking-[0.24em] text-bone/42">
+                <span className="text-xs uppercase tracking-[0.18em] text-bone/42 sm:tracking-[0.24em]">
                   {label}
                 </span>
                 <input
@@ -145,7 +145,7 @@ export function Cart({ initialSize = "M" }: CartProps) {
           </div>
 
           <div className="border-y border-bone/12 py-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-bone/58">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-bone/58 sm:tracking-[0.26em]">
               Payment
             </p>
             <p className="mt-4 text-sm leading-7 text-bone/56">
@@ -164,7 +164,7 @@ export function Cart({ initialSize = "M" }: CartProps) {
                       : "bg-[#090909] text-bone hover:bg-bone hover:text-ink"
                   }`}
                 >
-                  <span className="block text-sm font-semibold uppercase tracking-[0.2em]">
+                  <span className="block text-sm font-semibold uppercase tracking-[0.16em] sm:tracking-[0.2em]">
                     {method.label}
                   </span>
                   <span
@@ -188,7 +188,7 @@ export function Cart({ initialSize = "M" }: CartProps) {
 
           <button
             type="submit"
-            className="inline-flex min-h-12 w-full items-center justify-center bg-bone px-9 text-sm font-semibold uppercase tracking-[0.18em] text-ink transition hover:bg-champagne"
+            className="inline-flex min-h-12 w-full items-center justify-center bg-bone px-6 text-center text-sm font-semibold uppercase tracking-[0.14em] text-ink transition hover:bg-champagne sm:px-9 sm:tracking-[0.18em]"
           >
             Continue with {selectedPayment.label}
           </button>
@@ -196,7 +196,7 @@ export function Cart({ initialSize = "M" }: CartProps) {
 
         <aside className="lg:sticky lg:top-8">
           <div className="border border-bone/12 bg-[#070707] p-5">
-            <div className="relative min-h-[360px] overflow-hidden bg-black">
+            <div className="relative min-h-[260px] overflow-hidden bg-black sm:min-h-[360px]">
               <Image
                 src={product.image}
                 alt="Wavēdo Training Hoodie"
@@ -206,7 +206,7 @@ export function Cart({ initialSize = "M" }: CartProps) {
               />
             </div>
             <div className="mt-7">
-              <p className="text-xs uppercase tracking-[0.28em] text-bone/42">
+              <p className="text-xs uppercase tracking-[0.2em] text-bone/42 sm:tracking-[0.28em]">
                 Order Summary
               </p>
               <h2 className="mt-4 font-display text-3xl leading-tight">
@@ -216,16 +216,16 @@ export function Cart({ initialSize = "M" }: CartProps) {
             </div>
 
             <div className="mt-7">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-bone/48">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-bone/48 sm:tracking-[0.24em]">
                 Size
               </p>
-              <div className="mt-4 grid grid-cols-6 gap-px bg-bone/16">
+              <div className="mt-4 grid grid-cols-3 gap-px bg-bone/16 sm:grid-cols-6">
                 {sizes.map((size) => (
                   <button
                     key={size}
                     type="button"
                     onClick={() => setSelectedSize(size)}
-                    className={`min-h-11 text-xs font-semibold uppercase tracking-[0.16em] transition ${
+                    className={`min-h-11 text-xs font-semibold uppercase tracking-[0.14em] transition sm:tracking-[0.16em] ${
                       selectedSize === size
                         ? "bg-bone text-ink"
                         : "bg-ink text-bone/72 hover:bg-bone hover:text-ink"
@@ -238,7 +238,7 @@ export function Cart({ initialSize = "M" }: CartProps) {
             </div>
 
             <div className="mt-7 flex items-center justify-between border-y border-bone/12 py-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-bone/48">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-bone/48 sm:tracking-[0.24em]">
                 Quantity
               </p>
               <div className="flex items-center gap-px bg-bone/16">
