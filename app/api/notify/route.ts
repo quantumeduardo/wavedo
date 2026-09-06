@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 const resendApiKey = process.env.RESEND_API_KEY?.trim();
 const notificationTo = process.env.NOTIFICATION_TO_EMAIL?.trim();
-const fallbackNotificationFrom = "Wavedo <apply@wavedomethod.com>";
+const fallbackNotificationFrom = "Wavedo Private Coaching <apply@wavedomethod.com>";
 const confirmationTemplateId = "coaching-application";
 const applicationUrl = "https://www.wavedomethod.com/apply";
 const consultationUrl = "https://www.wavedomethod.com/#contact";
