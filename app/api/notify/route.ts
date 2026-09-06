@@ -46,9 +46,13 @@ function getApplicantEmail(fields: NotificationPayload["fields"] = {}) {
 }
 
 function getTemplateVariables(fields: NotificationPayload["fields"] = {}) {
+  const fullName = typeof fields.name === "string" ? fields.name.trim() : "";
+  const firstName = fullName.split(/\s+/)[0] || "there";
+
   return {
     application_url: applicationUrl,
     consultation_url: consultationUrl,
+    first_name: firstName,
     ...Object.fromEntries(
     Object.entries(fields)
       .filter(([, value]) => typeof value === "string" || typeof value === "number")
