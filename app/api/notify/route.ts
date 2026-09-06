@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 
-const resendApiKey = process.env.RESEND_API_KEY;
-const notificationTo = process.env.NOTIFICATION_TO_EMAIL;
-const notificationFrom = process.env.NOTIFICATION_FROM_EMAIL ?? "Wavēdo <onboarding@resend.dev>";
+const resendApiKey = process.env.RESEND_API_KEY?.trim();
+const notificationTo = process.env.NOTIFICATION_TO_EMAIL?.trim();
+const notificationFrom =
+  process.env.NOTIFICATION_FROM_EMAIL?.trim() ?? "Wavēdo <onboarding@resend.dev>";
 
 type NotificationPayload = {
   type?: string;
@@ -71,6 +72,22 @@ export async function POST(request: Request) {
     });
   }
 
+  if (!resendApiKey.startsWith("re_")) {
+    console.error("Wavēdo notification has the wrong API key type", {
+      startsWithResendPrefix: false,
+      keyLength: resendApiKey.length,
+    });
+
+    return NextResponse.json(
+      {
+        delivered: false,
+        message:
+          "The email key is not a Resend key. Add a Resend API key that starts with re_ in Vercel, then redeploy.",
+      },
+      { status: 502 },
+    );
+  }
+
   let response: Response;
 
   try {
@@ -102,17 +119,21 @@ export async function POST(request: Request) {
 
   if (!response.ok) {
     const resendError = await response.text();
+    const invalidApiKey = response.status === 401 && resendError.includes("API key is invalid");
 
     console.error("Resend rejected Wavēdo notification", {
       status: response.status,
       resendError,
+      keyLength: resendApiKey.length,
+      startsWithResendPrefix: resendApiKey.startsWith("re_"),
     });
 
     return NextResponse.json(
       {
         delivered: false,
-        message:
-          "The form was received, but the email service rejected the notification. Check the Vercel logs for the Resend error.",
+        message: invalidApiKey
+          ? "The form was received, but Resend says the API key is invalid. Create a new Resend API key, replace RESEND_API_KEY in Vercel, and redeploy."
+          : "The form was received, but the email service rejected the notification. Check the Vercel logs for the Resend error.",
       },
       { status: 502 },
     );
