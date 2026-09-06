@@ -1,4 +1,4 @@
-giimport { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const notificationTo = process.env.NOTIFICATION_TO_EMAIL;
