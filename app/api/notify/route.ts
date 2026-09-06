@@ -5,6 +5,7 @@ const notificationTo = process.env.NOTIFICATION_TO_EMAIL?.trim();
 const fallbackNotificationFrom = "Wavedo <apply@wavedomethod.com>";
 const confirmationTemplateId = "coaching-application";
 const applicationUrl = "https://www.wavedomethod.com/apply";
+const consultationUrl = "https://www.wavedomethod.com/#contact";
 
 type NotificationPayload = {
   type?: string;
@@ -47,6 +48,7 @@ function getApplicantEmail(fields: NotificationPayload["fields"] = {}) {
 function getTemplateVariables(fields: NotificationPayload["fields"] = {}) {
   return {
     application_url: applicationUrl,
+    consultation_url: consultationUrl,
     ...Object.fromEntries(
     Object.entries(fields)
       .filter(([, value]) => typeof value === "string" || typeof value === "number")
