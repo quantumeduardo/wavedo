@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 
 const resendApiKey = process.env.RESEND_API_KEY?.trim();
 const notificationTo = process.env.NOTIFICATION_TO_EMAIL?.trim();
-const notificationFrom =
-  process.env.NOTIFICATION_FROM_EMAIL?.trim() ?? "Wavēdo <onboarding@resend.dev>";
+const configuredNotificationFrom = process.env.NOTIFICATION_FROM_EMAIL?.trim();
+const fallbackNotificationFrom = "Wavēdo <onboarding@resend.dev>";
 
 type NotificationPayload = {
   type?: string;
@@ -35,6 +35,25 @@ function formatHtml(fields: NotificationPayload["fields"] = {}) {
       </table>
     </div>
   `;
+}
+
+function getNotificationFrom() {
+  if (!configuredNotificationFrom) {
+    return fallbackNotificationFrom;
+  }
+
+  const emailOnly = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const namedEmail = /^.+ <[^\s@]+@[^\s@]+\.[^\s@]+>$/;
+
+  if (emailOnly.test(configuredNotificationFrom) || namedEmail.test(configuredNotificationFrom)) {
+    return configuredNotificationFrom;
+  }
+
+  console.error("Wavēdo notification has an invalid sender email format", {
+    configuredSenderLength: configuredNotificationFrom.length,
+  });
+
+  return fallbackNotificationFrom;
 }
 
 export async function POST(request: Request) {
@@ -98,7 +117,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: notificationFrom,
+        from: getNotificationFrom(),
         to: notificationTo,
         subject,
         text: formatFields(fields),
