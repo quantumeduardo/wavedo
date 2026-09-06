@@ -4,6 +4,7 @@ const resendApiKey = process.env.RESEND_API_KEY?.trim();
 const notificationTo = process.env.NOTIFICATION_TO_EMAIL?.trim();
 const fallbackNotificationFrom = "Wavedo <apply@wavedomethod.com>";
 const confirmationTemplateId = "coaching-application";
+const applicationUrl = "https://www.wavedomethod.com/apply";
 
 type NotificationPayload = {
   type?: string;
@@ -44,11 +45,14 @@ function getApplicantEmail(fields: NotificationPayload["fields"] = {}) {
 }
 
 function getTemplateVariables(fields: NotificationPayload["fields"] = {}) {
-  return Object.fromEntries(
+  return {
+    application_url: applicationUrl,
+    ...Object.fromEntries(
     Object.entries(fields)
       .filter(([, value]) => typeof value === "string" || typeof value === "number")
       .map(([key, value]) => [key, value]),
-  );
+    ),
+  };
 }
 
 export async function POST(request: Request) {
