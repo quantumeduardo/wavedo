@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 const resendApiKey = process.env.RESEND_API_KEY?.trim();
 const notificationTo = process.env.NOTIFICATION_TO_EMAIL?.trim();
 const configuredNotificationFrom = process.env.NOTIFICATION_FROM_EMAIL?.trim();
-const fallbackNotificationFrom = "Wavēdo <onboarding@resend.dev>";
+const fallbackNotificationFrom = "Wavedo <onboarding@resend.dev>";
 
 type NotificationPayload = {
   type?: string;
@@ -44,8 +44,12 @@ function getNotificationFrom() {
 
   const emailOnly = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const namedEmail = /^.+ <[^\s@]+@[^\s@]+\.[^\s@]+>$/;
+  const asciiOnly = /^[\x00-\x7F]+$/;
 
-  if (emailOnly.test(configuredNotificationFrom) || namedEmail.test(configuredNotificationFrom)) {
+  if (
+    asciiOnly.test(configuredNotificationFrom) &&
+    (emailOnly.test(configuredNotificationFrom) || namedEmail.test(configuredNotificationFrom))
+  ) {
     return configuredNotificationFrom;
   }
 
