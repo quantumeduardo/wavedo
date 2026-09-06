@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 const resendApiKey = process.env.RESEND_API_KEY?.trim();
 const notificationTo = process.env.NOTIFICATION_TO_EMAIL?.trim();
-const fallbackNotificationFrom = "Wavedo <onboarding@resend.dev>";
+const fallbackNotificationFrom = "Wavedo <apply@wavedomethod.com>";
 
 type NotificationPayload = {
   type?: string;
