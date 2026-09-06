@@ -155,6 +155,9 @@ export async function POST(request: Request) {
 
   const applicantEmail = getApplicantEmail(fields);
   let confirmationDelivered = false;
+  let confirmationMessage = applicantEmail
+    ? "Confirmation email was not attempted."
+    : "No applicant email was provided.";
 
   if (payload.type === "intake" && applicantEmail) {
     const confirmationResponse = await fetch("https://api.resend.com/emails", {
@@ -174,9 +177,13 @@ export async function POST(request: Request) {
     });
 
     confirmationDelivered = confirmationResponse.ok;
+    confirmationMessage = confirmationDelivered
+      ? "Confirmation email sent."
+      : "Confirmation template was rejected by Resend.";
 
     if (!confirmationResponse.ok) {
       const confirmationError = await confirmationResponse.text();
+      confirmationMessage = confirmationError;
 
       console.error("Resend rejected Wavēdo confirmation template", {
         status: confirmationResponse.status,
@@ -189,6 +196,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     delivered: true,
     confirmationDelivered,
+    confirmationMessage,
     setupRequired: false,
   });
 }
