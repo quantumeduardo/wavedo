@@ -12,34 +12,43 @@ const programOptions = [
 export function IntakeForm() {
   const [submitted, setSubmitted] = useState(false);
   const [notice, setNotice] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setIsSubmitting(true);
     const formData = new FormData(event.currentTarget);
     const fields = Object.fromEntries(formData.entries());
 
-    const response = await fetch("/api/notify", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        type: "intake",
-        subject: "New Wavēdo Intake Evaluation",
-        fields,
-      }),
-    });
-    const result = (await response.json()) as {
-      delivered?: boolean;
-      message?: string;
-    };
+    try {
+      const response = await fetch("/api/notify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "intake",
+          subject: "New Wavēdo Intake Evaluation",
+          fields,
+        }),
+      });
+      const result = (await response.json()) as {
+        delivered?: boolean;
+        message?: string;
+      };
 
-    setNotice(
-      result.delivered
-        ? "Your evaluation was sent."
-        : result.message ?? "Your evaluation was captured.",
-    );
-    setSubmitted(true);
+      setNotice(
+        result.delivered
+          ? "Your evaluation was sent."
+          : result.message ?? "Your evaluation was captured.",
+      );
+      setSubmitted(true);
+    } catch {
+      setNotice("The form could not be submitted. Please try again.");
+      setSubmitted(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -159,9 +168,10 @@ export function IntakeForm() {
 
       <button
         type="submit"
+        disabled={isSubmitting}
         className="min-h-14 border border-champagne bg-champagne px-8 text-sm font-semibold tracking-[0.22em] text-ink transition hover:border-bone hover:bg-bone md:w-fit"
       >
-        Submit Evaluation
+        {isSubmitting ? "Submitting..." : "Submit Evaluation"}
       </button>
     </form>
   );
