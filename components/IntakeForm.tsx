@@ -59,7 +59,7 @@ export function IntakeForm() {
           onClick={() => setSubmitted(false)}
           className="mt-8 inline-flex min-h-12 items-center justify-center border border-champagne px-8 text-sm font-semibold tracking-[0.2em] text-champagne transition hover:bg-champagne hover:text-ink"
         >
-          Edit Form
+          Resubmit Evaluation
         </button>
       </div>
     );

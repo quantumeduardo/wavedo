@@ -4,7 +4,7 @@ export function CTA() {
       <div className="mx-auto max-w-4xl border-t border-champagne/30 pt-12 text-center sm:pt-16">
         {/* Edit closing CTA copy and button text here. */}
         <p className="text-xs font-semibold tracking-[0.24em] text-champagne sm:tracking-[0.34em]">
-          Private Intake
+          Intake
         </p>
         <h2 className="mx-auto mt-6 max-w-3xl font-display text-4xl leading-tight sm:text-6xl">
           Your next phase starts with structure.
