@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 const resendApiKey = process.env.RESEND_API_KEY?.trim();
 const notificationTo = process.env.NOTIFICATION_TO_EMAIL?.trim();
 const fallbackNotificationFrom = "Wavedo <apply@wavedomethod.com>";
+const confirmationTemplateId = "coaching-application";
 
 type NotificationPayload = {
   type?: string;
@@ -34,6 +35,20 @@ function formatHtml(fields: NotificationPayload["fields"] = {}) {
       </table>
     </div>
   `;
+}
+
+function getApplicantEmail(fields: NotificationPayload["fields"] = {}) {
+  const email = fields.email;
+
+  return typeof email === "string" && email.includes("@") ? email.trim() : null;
+}
+
+function getTemplateVariables(fields: NotificationPayload["fields"] = {}) {
+  return Object.fromEntries(
+    Object.entries(fields)
+      .filter(([, value]) => typeof value === "string" || typeof value === "number")
+      .map(([key, value]) => [key, value]),
+  );
 }
 
 export async function POST(request: Request) {
@@ -138,8 +153,42 @@ export async function POST(request: Request) {
     );
   }
 
+  const applicantEmail = getApplicantEmail(fields);
+  let confirmationDelivered = false;
+
+  if (payload.type === "intake" && applicantEmail) {
+    const confirmationResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: fallbackNotificationFrom,
+        to: applicantEmail,
+        template: {
+          id: confirmationTemplateId,
+          variables: getTemplateVariables(fields),
+        },
+      }),
+    });
+
+    confirmationDelivered = confirmationResponse.ok;
+
+    if (!confirmationResponse.ok) {
+      const confirmationError = await confirmationResponse.text();
+
+      console.error("Resend rejected Wavēdo confirmation template", {
+        status: confirmationResponse.status,
+        confirmationError,
+        templateId: confirmationTemplateId,
+      });
+    }
+  }
+
   return NextResponse.json({
     delivered: true,
+    confirmationDelivered,
     setupRequired: false,
   });
 }
