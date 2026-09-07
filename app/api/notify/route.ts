@@ -4,7 +4,7 @@ const resendApiKey = process.env.RESEND_API_KEY?.trim();
 const notificationTo = process.env.NOTIFICATION_TO_EMAIL?.trim();
 const fallbackNotificationFrom = "Wavedo Private Coaching <apply@wavedomethod.com>";
 const confirmationTemplateId = "coaching-application";
-const applicationUrl = "https://www.wavedomethod.com/apply";
+const applicationUrl = "https://www.wavedomethod.com/questionnaire";
 const consultationUrl = "https://www.wavedomethod.com/#contact";
 
 type NotificationPayload = {
@@ -54,11 +54,15 @@ function getTemplateVariables(fields: NotificationPayload["fields"] = {}) {
     consultation_url: consultationUrl,
     first_name: firstName,
     ...Object.fromEntries(
-    Object.entries(fields)
-      .filter(([, value]) => typeof value === "string" || typeof value === "number")
-      .map(([key, value]) => [key, value]),
+      Object.entries(fields)
+        .filter(([, value]) => typeof value === "string" || typeof value === "number")
+        .map(([key, value]) => [key, value]),
     ),
   };
+}
+
+function shouldSendConfirmation(type?: string) {
+  return type === "intake" || type === "questionnaire";
 }
 
 export async function POST(request: Request) {
@@ -169,7 +173,7 @@ export async function POST(request: Request) {
     ? "Confirmation email was not attempted."
     : "No applicant email was provided.";
 
-  if (payload.type === "intake" && applicantEmail) {
+  if (shouldSendConfirmation(payload.type) && applicantEmail) {
     const confirmationResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
