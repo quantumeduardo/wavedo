@@ -10,7 +10,7 @@ export function CTA() {
           Your next phase starts with structure.
         </h2>
         <a
-          href="/apply"
+          href="/questionnaire"
           className="mt-8 inline-flex min-h-12 items-center justify-center border border-champagne px-8 text-sm font-semibold tracking-[0.16em] text-champagne transition hover:bg-champagne hover:text-ink sm:mt-10 sm:px-9 sm:tracking-[0.2em]"
         >
           Apply Now
