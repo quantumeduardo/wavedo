@@ -31,8 +31,9 @@ export default function ApplyPage() {
               Start with a precise intake.
             </h1>
             <p className="mt-7 text-base leading-8 text-bone/64">
-              Share your goals, current routine, and what has been getting in
-              the way. This creates the baseline for your Wavēdo coaching path.
+              Choose your top training interests first, then share the essentials.
+              This creates the baseline for your Wavēdo coaching path without a
+              long written application.
             </p>
           </div>
 

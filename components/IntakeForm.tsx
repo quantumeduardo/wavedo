@@ -9,16 +9,77 @@ const programOptions = [
   "12-Week Strength & Body Recomposition",
 ];
 
+const trainingInterestOptions = [
+  "Strength",
+  "Body Recomposition",
+  "Fat Loss",
+  "Muscle Gain",
+  "Nutrition Structure",
+  "Energy & Recovery",
+  "Mobility",
+  "Accountability",
+  "Return From Injury",
+];
+
+const experienceOptions = [
+  "New to structured training",
+  "Returning after time away",
+  "Consistent but plateaued",
+  "Experienced and needs precision",
+];
+
+const nutritionOptions = [
+  "Need simple structure",
+  "Need macro guidance",
+  "Eating well but inconsistent",
+  "Need recovery and energy support",
+];
+
+const blockerOptions = [
+  "Consistency",
+  "Too many random programs",
+  "Schedule",
+  "Nutrition confusion",
+  "Low energy or recovery",
+  "Pain or injury considerations",
+];
+
 export function IntakeForm() {
   const [submitted, setSubmitted] = useState(false);
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [interestError, setInterestError] = useState("");
+
+  function toggleInterest(interest: string) {
+    setInterestError("");
+    setSelectedInterests((current) => {
+      if (current.includes(interest)) {
+        return current.filter((item) => item !== interest);
+      }
+
+      if (current.length === 3) {
+        return current;
+      }
+
+      return [...current, interest];
+    });
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (selectedInterests.length !== 3) {
+      setInterestError("Choose your top three training interests.");
+      return;
+    }
+
     setIsSubmitting(true);
     const formData = new FormData(event.currentTarget);
-    const fields = Object.fromEntries(formData.entries());
+    const fields = {
+      topTrainingInterests: selectedInterests.join(", "),
+      ...Object.fromEntries(formData.entries()),
+    };
 
     try {
       const response = await fetch("/api/notify", {
@@ -77,6 +138,123 @@ export function IntakeForm() {
   return (
     <form onSubmit={handleSubmit} className="grid gap-8">
       {/* Edit intake fields and labels here. */}
+      <section className="border border-champagne/24 bg-graphite p-5 sm:p-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold tracking-[0.28em] text-champagne">
+              First
+            </p>
+            <h2 className="mt-2 font-display text-2xl leading-tight text-bone">
+              Choose your top three training interests.
+            </h2>
+          </div>
+          <p className="text-xs font-semibold tracking-[0.18em] text-bone/54">
+            {selectedInterests.length}/3 Selected
+          </p>
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          {trainingInterestOptions.map((interest) => {
+            const isSelected = selectedInterests.includes(interest);
+
+            return (
+              <button
+                key={interest}
+                type="button"
+                onClick={() => toggleInterest(interest)}
+                aria-pressed={isSelected}
+                className={`min-h-12 border px-4 text-left text-sm font-semibold tracking-[0.12em] transition ${
+                  isSelected
+                    ? "border-champagne bg-champagne text-ink"
+                    : "border-bone/14 bg-ink text-bone/72 hover:border-champagne hover:text-bone"
+                }`}
+              >
+                {interest}
+              </button>
+            );
+          })}
+        </div>
+
+        {interestError ? (
+          <p className="mt-4 text-sm text-champagne">{interestError}</p>
+        ) : null}
+      </section>
+
+      <div className="grid gap-5 md:grid-cols-2">
+        <label className="grid gap-3 text-xs font-semibold tracking-[0.22em] text-bone/72">
+          Preferred Program
+          <select
+            required
+            name="program"
+            defaultValue=""
+            className="min-h-12 border border-bone/14 bg-graphite px-4 text-base tracking-normal text-bone outline-none transition focus:border-champagne"
+          >
+            <option value="" disabled>
+              Select One
+            </option>
+            {programOptions.map((program) => (
+              <option key={program} value={program}>
+                {program}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-3 text-xs font-semibold tracking-[0.22em] text-bone/72">
+          Training Experience
+          <select
+            required
+            name="trainingExperience"
+            defaultValue=""
+            className="min-h-12 border border-bone/14 bg-graphite px-4 text-base tracking-normal text-bone outline-none transition focus:border-champagne"
+          >
+            <option value="" disabled>
+              Select One
+            </option>
+            {experienceOptions.map((experience) => (
+              <option key={experience} value={experience}>
+                {experience}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-3 text-xs font-semibold tracking-[0.22em] text-bone/72">
+          Nutrition & Recovery
+          <select
+            required
+            name="nutritionRecovery"
+            defaultValue=""
+            className="min-h-12 border border-bone/14 bg-graphite px-4 text-base tracking-normal text-bone outline-none transition focus:border-champagne"
+          >
+            <option value="" disabled>
+              Select One
+            </option>
+            {nutritionOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-3 text-xs font-semibold tracking-[0.22em] text-bone/72">
+          Biggest Blocker
+          <select
+            required
+            name="biggestBlocker"
+            defaultValue=""
+            className="min-h-12 border border-bone/14 bg-graphite px-4 text-base tracking-normal text-bone outline-none transition focus:border-champagne"
+          >
+            <option value="" disabled>
+              Select One
+            </option>
+            {blockerOptions.map((blocker) => (
+              <option key={blocker} value={blocker}>
+                {blocker}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
       <div className="grid gap-5 md:grid-cols-2">
         <label className="grid gap-3 text-xs font-semibold tracking-[0.22em] text-bone/72">
           Full Name
@@ -104,65 +282,15 @@ export function IntakeForm() {
             className="min-h-12 border border-bone/14 bg-graphite px-4 text-base tracking-normal text-bone outline-none transition focus:border-champagne"
           />
         </label>
-        <label className="grid gap-3 text-xs font-semibold tracking-[0.22em] text-bone/72">
-          Preferred Program
-          <select
-            required
-            name="program"
-            defaultValue=""
-            className="min-h-12 border border-bone/14 bg-graphite px-4 text-base tracking-normal text-bone outline-none transition focus:border-champagne"
-          >
-            <option value="" disabled>
-              Select One
-            </option>
-            {programOptions.map((program) => (
-              <option key={program} value={program}>
-                {program}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
 
       <label className="grid gap-3 text-xs font-semibold tracking-[0.22em] text-bone/72">
-        Primary Goal
+        Anything Eduardo Should Know?
         <textarea
-          required
-          name="goal"
+          name="notes"
           rows={4}
           className="border border-bone/14 bg-graphite px-4 py-3 text-base leading-7 tracking-normal text-bone outline-none transition focus:border-champagne"
-          placeholder="Strength, recomposition, consistency, energy, recovery..."
-        />
-      </label>
-
-      <div className="grid gap-5 md:grid-cols-2">
-        <label className="grid gap-3 text-xs font-semibold tracking-[0.22em] text-bone/72">
-          Training History
-          <textarea
-            required
-            name="trainingHistory"
-            rows={5}
-            className="border border-bone/14 bg-graphite px-4 py-3 text-base leading-7 tracking-normal text-bone outline-none transition focus:border-champagne"
-          />
-        </label>
-        <label className="grid gap-3 text-xs font-semibold tracking-[0.22em] text-bone/72">
-          Nutrition & Recovery
-          <textarea
-            required
-            name="nutritionRecovery"
-            rows={5}
-            className="border border-bone/14 bg-graphite px-4 py-3 text-base leading-7 tracking-normal text-bone outline-none transition focus:border-champagne"
-          />
-        </label>
-      </div>
-
-      <label className="grid gap-3 text-xs font-semibold tracking-[0.22em] text-bone/72">
-        What Feels Stuck Right Now?
-        <textarea
-          required
-          name="stuck"
-          rows={4}
-          className="border border-bone/14 bg-graphite px-4 py-3 text-base leading-7 tracking-normal text-bone outline-none transition focus:border-champagne"
+          placeholder="Optional: injury considerations, schedule limits, timeline, or anything personal to your goals."
         />
       </label>
 
