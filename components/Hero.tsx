@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { consultationUrl } from "@/lib/booking";
 
 const navLinks = [
   { label: "Programs", href: "#programs" },
@@ -47,7 +48,7 @@ export function Hero() {
               Start Your Program
             </a>
             <a
-              href="#contact"
+              href={consultationUrl}
               className="inline-flex min-h-12 items-center justify-center border border-white/28 px-5 text-center text-xs font-semibold uppercase tracking-[0.14em] text-white transition hover:border-champagne hover:text-champagne sm:px-7 sm:text-sm sm:tracking-[0.18em]"
             >
               Book a Virtual Consultation

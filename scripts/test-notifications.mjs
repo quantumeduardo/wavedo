@@ -10,6 +10,7 @@ for (const overrides of [{RESEND_API_KEY:''}, {NOTIFICATION_TO_EMAIL:'a@b.com,c@
 }
 let source = readFileSync(new URL('../app/api/notify/route.ts', import.meta.url), 'utf8');
 source = source.replace('"next/server"', JSON.stringify(import.meta.resolve('next/server.js'))).replace('"@/lib/notification-config.mjs"', JSON.stringify(new URL('../lib/notification-config.mjs', import.meta.url).href));
+source = source.replace('import { consultationUrl } from "@/lib/booking";', readFileSync(new URL('../lib/booking.ts', import.meta.url), 'utf8').replace('export ', ''));
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
 const { POST } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`);
 Object.assign(process.env, valid);

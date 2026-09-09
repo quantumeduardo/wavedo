@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { consultationUrl } from "@/lib/booking";
 
 const trainingInterestOptions = [
   "Strength",
@@ -129,6 +130,8 @@ export function QuestionnaireForm() {
       return;
     }
 
+    if (isSubmitting) return;
+    setNotice("");
     setIsSubmitting(true);
     const formData = new FormData(event.currentTarget);
     const topTrainingInterests = selectedInterests.join(", ");
@@ -153,17 +156,22 @@ export function QuestionnaireForm() {
       const result = (await response.json()) as {
         delivered?: boolean;
         message?: string;
+        setupRequired?: boolean;
+        confirmationDelivered?: boolean;
       };
 
-      setNotice(
-        result.delivered
-          ? "Your questionnaire was sent."
-          : result.message ?? "Your questionnaire was captured.",
-      );
+      if (!response.ok || result.delivered !== true) {
+        setNotice(result.setupRequired
+          ? "Submissions are temporarily unavailable. Your questionnaire has not been sent. Your answers are still here; please try again later."
+          : result.message ?? "Your questionnaire could not be sent. Please try again.");
+        return;
+      }
+      setNotice(result.confirmationDelivered
+        ? "Your questionnaire was sent to Eduardo, and a confirmation email is on its way. Check your spam folder if you don’t see it."
+        : "Your questionnaire was sent to Eduardo. We couldn’t send your confirmation email, but you don’t need to submit again.");
       setSubmitted(true);
     } catch {
-      setNotice("The questionnaire could not be submitted. Please try again.");
-      setSubmitted(true);
+      setNotice("We couldn’t confirm submission. Your answers are still here. Please check your connection before trying again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -171,7 +179,7 @@ export function QuestionnaireForm() {
 
   if (submitted) {
     return (
-      <div className="border border-champagne/40 bg-graphite p-8 text-center shadow-gold">
+      <div role="status" tabIndex={-1} ref={(element) => element?.focus()} className="border border-champagne/40 bg-graphite p-8 text-center shadow-gold">
         <p className="text-xs font-semibold tracking-[0.34em] text-champagne">
           Questionnaire Received
         </p>
@@ -181,19 +189,18 @@ export function QuestionnaireForm() {
         <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-bone/64">
           {notice}
         </p>
-        <button
-          type="button"
-          onClick={() => setSubmitted(false)}
+        <a
+          href={consultationUrl}
           className="mt-8 inline-flex min-h-12 items-center justify-center border border-champagne px-8 text-sm font-semibold tracking-[0.18em] text-champagne transition hover:bg-champagne hover:text-ink"
         >
-          Submit Another
-        </button>
+          Book a Virtual Consultation
+        </a>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-8">
+    <form aria-busy={isSubmitting} onSubmit={handleSubmit} className="grid gap-8">
       {/* Edit questionnaire choices and labels in the arrays above. */}
       <section className="border border-champagne/24 bg-graphite p-5 sm:p-7">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -331,6 +338,14 @@ export function QuestionnaireForm() {
         </label>
       </section>
 
+      {notice ? (
+        <div role="alert" className="border border-champagne/40 bg-graphite p-5 text-sm leading-7 text-bone">
+          <p>{notice}</p>
+          <a href={consultationUrl} className="mt-2 inline-block text-champagne underline">
+            Book a consultation instead
+          </a>
+        </div>
+      ) : null}
       <button
         type="submit"
         disabled={isSubmitting}

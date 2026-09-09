@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { consultationUrl } from "@/lib/booking";
 import { isEmail, validateNotificationConfig } from "@/lib/notification-config.mjs";
 
 const confirmationTemplateId = "coaching-application";
 const applicationUrl = "https://www.wavedomethod.com/questionnaire";
-const consultationUrl = "https://calendly.com/eduardolandart/30min";
+
 
 type NotificationPayload = {
   type?: string;
