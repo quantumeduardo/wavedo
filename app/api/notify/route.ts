@@ -3,7 +3,7 @@ import { isEmail, validateNotificationConfig } from "@/lib/notification-config.m
 
 const confirmationTemplateId = "coaching-application";
 const applicationUrl = "https://www.wavedomethod.com/questionnaire";
-const consultationUrl = "https://calendly.com/eduardolandart/30min;
+const consultationUrl = "https://calendly.com/eduardolandart/30min";
 
 type NotificationPayload = {
   type?: string;
