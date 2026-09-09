@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useMemo, useState } from "react";
-
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { CartItem, readCart, saveCart } from "@/lib/cart-storage";
 const product = {
   name: "Wavēdo Training Hoodie",
   price: 100,
@@ -11,59 +11,47 @@ const product = {
 };
 
 const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
+
+
+
+function safePaymentLink(value: string) {
+  try { const url = new URL(value.trim()); return url.protocol === "https:" && !url.username && !url.password ? url.href : ""; } catch { return ""; }
+}
 const paymentMethods = [
-  {
-    id: "card",
-    label: "Card",
-    note: "Secure card checkout",
-    envName: "NEXT_PUBLIC_STRIPE_PAYMENT_LINK",
-    href: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK ?? "",
-  },
-  {
-    id: "paypal",
-    label: "PayPal",
-    note: "Pay with PayPal",
-    envName: "NEXT_PUBLIC_PAYPAL_PAYMENT_LINK",
-    href: process.env.NEXT_PUBLIC_PAYPAL_PAYMENT_LINK ?? "",
-  },
-  {
-    id: "venmo",
-    label: "Venmo",
-    note: "Pay with Venmo",
-    envName: "NEXT_PUBLIC_VENMO_PAYMENT_LINK",
-    href: process.env.NEXT_PUBLIC_VENMO_PAYMENT_LINK ?? "",
-  },
-  {
-    id: "cashapp",
-    label: "Cash App",
-    note: "Pay with Cash App",
-    envName: "NEXT_PUBLIC_CASHAPP_PAYMENT_LINK",
-    href: process.env.NEXT_PUBLIC_CASHAPP_PAYMENT_LINK ?? "",
-  },
-];
+  { id: "card", label: "Card", href: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK ?? "" },
+  { id: "paypal", label: "PayPal", href: process.env.NEXT_PUBLIC_PAYPAL_PAYMENT_LINK ?? "" },
+  { id: "venmo", label: "Venmo", href: process.env.NEXT_PUBLIC_VENMO_PAYMENT_LINK ?? "" },
+  { id: "cashapp", label: "Cash App", href: process.env.NEXT_PUBLIC_CASHAPP_PAYMENT_LINK ?? "" },
+].map((method) => ({ ...method, href: safePaymentLink(method.href) }));
 
 type CartProps = {
   initialSize?: string;
 };
 
-export function Cart({ initialSize = "M" }: CartProps) {
-  const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState(
-    sizes.includes(initialSize) ? initialSize : "M",
-  );
-  const [selectedPaymentId, setSelectedPaymentId] = useState(paymentMethods[0].id);
-  const [submitted, setSubmitted] = useState(false);
-
+export function Cart({ initialSize }: CartProps) {
+  const [cartReady, setCartReady] = useState(false);
+  const [items, setItems] = useState<CartItem[]>([]);
+  useEffect(() => {
+    const saved = readCart();
+    setItems(saved?.items ?? (initialSize && sizes.includes(initialSize) ? [{ size: initialSize, quantity: 1 }] : []));
+    setCartReady(true);
+  }, [initialSize]);
+  useEffect(() => {
+    if (cartReady) saveCart({ ...(items[items.length - 1] ?? { size: "M", quantity: 0 }), items });
+  }, [cartReady, items]);
+  function changeQuantity(size: string, delta: number) {
+    setItems((current) => current.map((item) => item.size === size ? { ...item, quantity: item.quantity + delta } : item).filter((item) => item.quantity > 0));
+  }
+  const quantity = items.reduce((sum, item) => sum + item.quantity, 0);
+  const selectedSize = items.map((item) => item.size + " × " + item.quantity).join(", ");
   const subtotal = useMemo(() => product.price * quantity, [quantity]);
   const shipping = subtotal >= 100 ? 0 : 12;
   const total = subtotal + shipping;
-  const selectedPayment = paymentMethods.find(
-    (method) => method.id === selectedPaymentId,
-  ) ?? paymentMethods[0];
+  const selectedPayment = paymentMethods.find((method) => method.href) ?? paymentMethods[0];
 
   const submitCheckout = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSubmitted(true);
+    if (!selectedPayment.href) return;
     const formData = new FormData(event.currentTarget);
     const fields = Object.fromEntries(formData.entries());
     const notificationPayload = {
@@ -102,6 +90,14 @@ export function Cart({ initialSize = "M" }: CartProps) {
     });
   };
 
+  if (!cartReady) return <p role="status" className="bg-ink p-8 text-bone">Loading your cart…</p>;
+  if (!items.length) return (
+    <section className="min-h-[60vh] bg-ink px-6 py-24 text-center text-bone">
+      <h1 role="status" className="font-display text-4xl">Your cart is empty.</h1>
+      <a href="/shop" className="mt-8 inline-flex min-h-12 items-center bg-bone px-8 text-sm text-ink">Continue shopping</a>
+    </section>
+  );
+
   return (
     <section className="min-h-screen bg-ink px-4 py-12 text-bone sm:px-6 sm:py-20 lg:px-8">
       <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1fr_0.72fr] lg:items-start">
@@ -114,6 +110,25 @@ export function Cart({ initialSize = "M" }: CartProps) {
               Shipping Information
             </h1>
           </div>
+
+          <section aria-labelledby="express-checkout" className="rounded-2xl border border-bone/20 p-5 sm:p-7">
+            <h2 id="express-checkout" className="text-center text-sm font-semibold uppercase tracking-[0.18em]">Express checkout</h2>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {paymentMethods.map((method) => {
+                const label = method.id === "card" ? "Card & wallets" : method.label;
+                const styles = "flex min-h-14 items-center justify-center rounded-lg border border-bone/20 px-5 text-sm font-semibold";
+                return method.href ? (
+                  <a key={method.id} href={method.href} className={`${styles} bg-bone text-ink transition hover:bg-champagne`}>{label} ↗</a>
+                ) : (
+                  <button key={method.id} type="button" disabled className={`${styles} cursor-not-allowed text-bone/40`} aria-label={`${label} unavailable`}>{label} · Unavailable</button>
+                );
+              })}
+            </div>
+            {paymentMethods[0].href ? <p className="mt-4 text-center text-xs leading-6 text-bone/60">Apple Pay is available in Stripe checkout on supported devices when enabled.</p> : null}
+            <p className="mt-3 text-center text-xs leading-6 text-bone/60">Continue directly to your payment provider. Confirm your size, quantity, shipping address, and final total there before paying.</p>
+            <p className="mt-2 text-center text-xs leading-6 text-bone/50">Selected here: {selectedSize} · {quantity} {quantity === 1 ? "hoodie" : "hoodies"}. These selections are not automatically transferred to payment links.</p>
+          </section>
+          <div className="flex items-center gap-4 text-xs uppercase tracking-wider text-bone/50"><span className="h-px flex-1 bg-bone/15" />Or enter shipping details<span className="h-px flex-1 bg-bone/15" /></div>
 
           {/* Shipping form fields can be connected to a backend, CRM, or payment provider later. */}
           <div className="grid gap-px border border-bone/12 bg-bone/12 sm:grid-cols-2">
@@ -144,51 +159,10 @@ export function Cart({ initialSize = "M" }: CartProps) {
             ))}
           </div>
 
-          <div className="border-y border-bone/12 py-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-bone/58 sm:tracking-[0.26em]">
-              Payment
-            </p>
-            <p className="mt-4 text-sm leading-7 text-bone/56">
-              Choose a secure payment option. Add the provider payment link in your
-              environment variables when each option is ready.
-            </p>
-            <div className="mt-6 grid gap-px bg-bone/12 sm:grid-cols-2">
-              {paymentMethods.map((method) => (
-                <button
-                  key={method.id}
-                  type="button"
-                  onClick={() => setSelectedPaymentId(method.id)}
-                  className={`min-h-24 p-5 text-left transition ${
-                    selectedPaymentId === method.id
-                      ? "bg-bone text-ink"
-                      : "bg-[#090909] text-bone hover:bg-bone hover:text-ink"
-                  }`}
-                >
-                  <span className="block text-sm font-semibold uppercase tracking-[0.16em] sm:tracking-[0.2em]">
-                    {method.label}
-                  </span>
-                  <span
-                    className={`mt-3 block text-xs leading-5 ${
-                      selectedPaymentId === method.id ? "text-ink/60" : "text-bone/46"
-                    }`}
-                  >
-                    {method.note}
-                  </span>
-                </button>
-              ))}
-            </div>
-            {submitted && !selectedPayment.href ? (
-              <p className="mt-5 border border-champagne/30 bg-champagne/10 p-4 text-sm leading-7 text-champagne">
-                Shipping information captured in this checkout preview. Add
-                <span className="text-bone"> {selectedPayment.envName} </span>
-                to enable {selectedPayment.label} payments.
-              </p>
-            ) : null}
-          </div>
-
           <button
             type="submit"
-            className="inline-flex min-h-12 w-full items-center justify-center bg-bone px-6 text-center text-sm font-semibold uppercase tracking-[0.14em] text-ink transition hover:bg-champagne sm:px-9 sm:tracking-[0.18em]"
+            disabled={!selectedPayment.href}
+            className="inline-flex min-h-12 w-full items-center justify-center bg-bone px-6 text-center text-sm font-semibold uppercase tracking-[0.14em] text-ink transition hover:bg-champagne disabled:cursor-not-allowed disabled:opacity-40 sm:px-9 sm:tracking-[0.18em]"
           >
             Continue with {selectedPayment.label}
           </button>
@@ -215,51 +189,17 @@ export function Cart({ initialSize = "M" }: CartProps) {
               <p className="mt-3 text-sm text-bone/54">{product.color}</p>
             </div>
 
-            <div className="mt-7">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-bone/48 sm:tracking-[0.24em]">
-                Size
-              </p>
-              <div className="mt-4 grid grid-cols-3 gap-px bg-bone/16 sm:grid-cols-6">
-                {sizes.map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => setSelectedSize(size)}
-                    className={`min-h-11 text-xs font-semibold uppercase tracking-[0.14em] transition sm:tracking-[0.16em] ${
-                      selectedSize === size
-                        ? "bg-bone text-ink"
-                        : "bg-ink text-bone/72 hover:bg-bone hover:text-ink"
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-7 flex items-center justify-between border-y border-bone/12 py-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-bone/48 sm:tracking-[0.24em]">
-                Quantity
-              </p>
-              <div className="flex items-center gap-px bg-bone/16">
-                <button
-                  type="button"
-                  onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                  className="min-h-10 w-10 bg-ink text-lg text-bone transition hover:bg-bone hover:text-ink"
-                >
-                  -
-                </button>
-                <span className="flex min-h-10 w-12 items-center justify-center bg-ink text-sm">
-                  {quantity}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setQuantity((current) => current + 1)}
-                  className="min-h-10 w-10 bg-ink text-lg text-bone transition hover:bg-bone hover:text-ink"
-                >
-                  +
-                </button>
-              </div>
+            <div className="mt-7 divide-y divide-bone/15 border-y border-bone/15">
+              {items.map((item) => (
+                <div key={item.size} className="flex flex-wrap items-center justify-between gap-4 py-5">
+                  <div><p>Size {item.size}</p><p className="text-xs text-bone/60">Line total: {item.quantity * product.price} USD</p></div>
+                  <div className="flex items-center gap-2">
+                    <button type="button" aria-label={(item.quantity === 1 ? "Remove size " : "Decrease size ") + item.size} onClick={() => changeQuantity(item.size, -1)} className="min-h-11 min-w-11 border border-bone/20">−</button>
+                    <span aria-live="polite" className="min-w-8 text-center">{item.quantity}</span>
+                    <button type="button" aria-label={"Increase " + item.size} onClick={() => changeQuantity(item.size, 1)} className="min-h-11 min-w-11 border border-bone/20">+</button>
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div className="mt-6 space-y-4 text-sm text-bone/58">

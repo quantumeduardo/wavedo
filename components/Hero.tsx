@@ -1,9 +1,10 @@
 import Image from "next/image";
+import { shopUrl } from "@/lib/site-links";
 import { consultationUrl } from "@/lib/booking";
 
 const navLinks = [
   { label: "Programs", href: "#programs" },
-  { label: "Shop", href: "#shop" },
+  { label: "Shop", href: shopUrl },
   { label: "About", href: "#about" },
   { label: "Contact", href: "#contact" },
 ];

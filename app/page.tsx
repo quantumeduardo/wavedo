@@ -1,7 +1,7 @@
 import { CTA } from "@/components/CTA";
+import { shopUrl } from "@/lib/site-links";
 import { Hero } from "@/components/Hero";
 import { Programs } from "@/components/Programs";
-import { Shop } from "@/components/Shop";
 import { Testimonial } from "@/components/Testimonial";
 
 export default function Home() {
@@ -65,7 +65,6 @@ export default function Home() {
 
       <Programs />
       <Testimonial />
-      <Shop compact />
       <CTA />
 
       {/* Edit footer links and brand line here. */}
@@ -77,7 +76,7 @@ export default function Home() {
           </div>
           <nav className="flex flex-wrap gap-x-5 gap-y-3 text-xs font-semibold uppercase tracking-[0.16em] text-bone/54 sm:gap-6 sm:tracking-[0.24em]">
             <a href="#programs" className="transition hover:text-champagne">Programs</a>
-            <a href="#shop" className="transition hover:text-champagne">Shop</a>
+            <a href={shopUrl} className="transition hover:text-champagne">Shop</a>
             <a href="#about" className="transition hover:text-champagne">About</a>
             <a href="#contact" className="transition hover:text-champagne">Contact</a>
           </nav>
