@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, FormEvent, useContext, useRef, useState } from "react";
-import { consultationUrl } from "@/lib/booking";
 
 const ValidationContext = createContext<Record<string, string>>({});
 function FieldError({ name }: { name: string }) {
@@ -261,12 +260,6 @@ export function QuestionnaireForm() {
         <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-bone/64">
           {notice}
         </p>
-        <a
-          href={consultationUrl}
-          className="mt-8 inline-flex min-h-12 items-center justify-center border border-champagne px-8 text-sm font-semibold tracking-[0.18em] text-champagne transition hover:bg-champagne hover:text-ink"
-        >
-          Book a Virtual Consultation
-        </a>
       </div>
     );
   }
