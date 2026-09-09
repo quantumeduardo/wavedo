@@ -74,6 +74,8 @@ export function IntakeForm() {
       return;
     }
 
+    if (isSubmitting) return;
+    setNotice("");
     setIsSubmitting(true);
     const formData = new FormData(event.currentTarget);
     const fields = {
@@ -96,17 +98,22 @@ export function IntakeForm() {
       const result = (await response.json()) as {
         delivered?: boolean;
         message?: string;
+        setupRequired?: boolean;
+        confirmationDelivered?: boolean;
       };
 
-      setNotice(
-        result.delivered
-          ? "Your evaluation was sent."
-          : result.message ?? "Your evaluation was captured.",
-      );
+      if (!response.ok || result.delivered !== true) {
+        setNotice(result.setupRequired
+          ? "Submissions are temporarily unavailable. Your evaluation has not been sent. Your answers are still here; please try again later."
+          : result.message ?? "Your evaluation could not be sent. Please try again.");
+        return;
+      }
+      setNotice(result.confirmationDelivered
+        ? "Your evaluation was sent to Eduardo, and a confirmation email is on its way. Check your spam folder if you don’t see it."
+        : "Your evaluation was sent to Eduardo. We couldn’t send your confirmation email, but you don’t need to submit again.");
       setSubmitted(true);
     } catch {
-      setNotice("The form could not be submitted. Please try again.");
-      setSubmitted(true);
+      setNotice("We couldn’t confirm submission. Your answers are still here. Please check your connection before trying again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -114,29 +121,25 @@ export function IntakeForm() {
 
   if (submitted) {
     return (
-      <div className="border border-champagne/40 bg-graphite p-8 text-center shadow-gold">
+      <div role="status" tabIndex={-1} ref={(element) => element?.focus()} className="border border-champagne/40 bg-graphite p-8 text-center shadow-gold">
         <p className="text-xs font-semibold tracking-[0.34em] text-champagne">
           Intake Received
         </p>
         <h2 className="mt-5 font-display text-4xl leading-tight text-bone">
-          Your evaluation has been captured.
+          Thank you for taking the first step.
         </h2>
         <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-bone/64">
           {notice}
         </p>
-        <button
-          type="button"
-          onClick={() => setSubmitted(false)}
-          className="mt-8 inline-flex min-h-12 items-center justify-center border border-champagne px-8 text-sm font-semibold tracking-[0.2em] text-champagne transition hover:bg-champagne hover:text-ink"
-        >
-          Resubmit Evaluation
-        </button>
+        <a href="/" className="mt-8 inline-flex min-h-12 items-center justify-center border border-champagne px-8 text-sm font-semibold tracking-[0.2em] text-champagne transition hover:bg-champagne hover:text-ink">
+          Back Home
+        </a>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-8">
+    <form aria-busy={isSubmitting} onSubmit={handleSubmit} className="grid gap-8">
       {/* Edit intake fields and labels here. */}
       <section className="border border-champagne/24 bg-graphite p-5 sm:p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -294,6 +297,7 @@ export function IntakeForm() {
         />
       </label>
 
+      {notice ? <p role="alert" className="border border-champagne/40 bg-graphite p-5 text-sm leading-7 text-bone">{notice}</p> : null}
       <button
         type="submit"
         disabled={isSubmitting}

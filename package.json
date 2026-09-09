@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "check:notifications": "node scripts/check-notification-env.mjs",
+    "test:notifications": "node scripts/test-notifications.mjs"
   },
   "dependencies": {
     "next": "^16.2.4",
