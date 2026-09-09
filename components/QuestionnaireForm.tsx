@@ -1,7 +1,13 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { createContext, FormEvent, useContext, useRef, useState } from "react";
 import { consultationUrl } from "@/lib/booking";
+
+const ValidationContext = createContext<Record<string, string>>({});
+function FieldError({ name }: { name: string }) {
+  const errors = useContext(ValidationContext);
+  return errors[name] ? <p id={`${name}-error`} className="mt-2 text-sm text-champagne">{errors[name]}</p> : null;
+}
 
 const trainingInterestOptions = [
   "Strength",
@@ -60,14 +66,26 @@ const nutritionOptions = [
   "Energy and recovery support",
 ];
 
-const sleepOptions = [
-  "Strong",
-  "Average",
-  "Inconsistent",
-  "Needs work",
-];
-
-const stressOptions = ["Low", "Moderate", "High", "Very high"];
+function Rating({ label, name, low, high }: { label: string; name: string; low: string; high: string }) {
+  const errors = useContext(ValidationContext);
+  return (
+    <fieldset className="min-w-0">
+      <legend className="mb-4 text-base text-bone">{label}</legend>
+      <div className="grid grid-cols-5 gap-2 sm:grid-cols-10">
+        {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
+          <label key={value} className="relative cursor-pointer">
+            <input required type="radio" name={name} value={`${value}/10 (1 = ${low}; 10 = ${high})`} aria-invalid={!!errors[name]} aria-describedby={errors[name] ? `${name}-error` : undefined} aria-label={`${value} out of 10`} className="peer sr-only" />
+            <span className="flex min-h-12 items-center justify-center rounded-xl border border-bone/15 text-sm text-bone/70 transition hover:border-champagne peer-checked:border-champagne peer-checked:bg-champagne peer-checked:text-ink peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-champagne">{value}</span>
+          </label>
+        ))}
+      </div>
+      <div className="mt-3 flex justify-between gap-6 text-xs leading-5 text-bone/55">
+        <span>1 · {low}</span><span className="text-right">10 · {high}</span>
+      </div>
+      <FieldError name={name} />
+    </fieldset>
+  );
+}
 
 function FieldSelect({
   label,
@@ -78,14 +96,17 @@ function FieldSelect({
   name: string;
   options: string[];
 }) {
+  const errors = useContext(ValidationContext);
   return (
-    <label className="grid gap-3 text-xs font-semibold tracking-[0.2em] text-bone/72">
+    <label className="grid gap-3 text-sm text-bone/70">
       {label}
       <select
         required
         name={name}
+        aria-invalid={!!errors[name]}
+        aria-describedby={errors[name] ? `${name}-error` : undefined}
         defaultValue=""
-        className="min-h-12 border border-bone/14 bg-graphite px-4 text-base tracking-normal text-bone outline-none transition focus:border-champagne"
+        className="min-h-12 rounded-xl border border-bone/14 bg-graphite px-4 text-base tracking-normal text-bone outline-none transition focus:border-champagne"
       >
         <option value="" disabled>
           Select One
@@ -96,40 +117,91 @@ function FieldSelect({
           </option>
         ))}
       </select>
+      <FieldError name={name} />
     </label>
   );
 }
 
 export function QuestionnaireForm() {
+  const cardsRef = useRef<HTMLDivElement>(null);
+  const [activeCard, setActiveCard] = useState(0);
+  const cardNames = ["Your direction", "Your rhythm", "How you feel", "Stay connected"];
+
+  function goToCard(index: number) {
+    const container = cardsRef.current;
+    const card = container?.children[index] as HTMLElement | undefined;
+    if (!container || !card) return;
+    container.scrollTo({ left: container.scrollLeft + card.getBoundingClientRect().left - container.getBoundingClientRect().left, behavior: "instant" });
+    setActiveCard(index);
+    card.focus({ preventScroll: true });
+  }
+
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [interestError, setInterestError] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  function validateThrough(lastCard: number) {
+    const nextErrors: Record<string, string> = {};
+    let firstInvalid: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | undefined;
+    let firstCard = -1;
+    if (selectedInterests.length !== 3) {
+      nextErrors.interests = "Choose exactly three training interests.";
+      firstCard = 0;
+    }
+    for (let index = 1; index <= lastCard; index++) {
+      const card = cardsRef.current?.children[index];
+      card?.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("input[required], select[required], textarea[required]").forEach((field) => {
+        const missing = field.type !== "radio" && !field.value.trim();
+        if (!field.validity.valid || missing) {
+          nextErrors[field.name] = field.type === "radio" ? "Choose a rating from 1 to 10." : field.name === "email" ? "Enter a valid email address." : field.name === "name" ? "Enter your full name." : "Choose an option.";
+          if (firstCard === -1) { firstCard = index; firstInvalid = field; }
+        }
+      });
+    }
+    setErrors(nextErrors);
+    setInterestError(nextErrors.interests ?? "");
+    if (firstCard !== -1) {
+      goToCard(firstCard);
+      firstInvalid?.focus({ preventScroll: true });
+      firstInvalid?.closest("fieldset, label")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+      return false;
+    }
+    return true;
+  }
+
+  function navigate(index: number) {
+    if (index <= activeCard || validateThrough(index - 1)) goToCard(index);
+  }
+
   function toggleInterest(interest: string) {
     setInterestError("");
-    setSelectedInterests((current) => {
-      if (current.includes(interest)) {
-        return current.filter((item) => item !== interest);
-      }
+    setErrors((current) => { const updated = { ...current }; delete updated.interests; return updated; });
+    const next = selectedInterests.includes(interest)
+      ? selectedInterests.filter((item) => item !== interest)
+      : selectedInterests.length < 3 ? [...selectedInterests, interest] : selectedInterests;
+    setSelectedInterests(next);
+    if (selectedInterests.length < 3 && next.length === 3) goToCard(1);
+  }
 
-      if (current.length === 3) {
-        return current;
-      }
-
-      return [...current, interest];
-    });
+  function advanceCompletedCard(event: FormEvent<HTMLFormElement>) {
+    const field = event.target as HTMLInputElement | HTMLSelectElement;
+    if (field.validity?.valid && field.value.trim()) {
+      setErrors((current) => { const updated = { ...current }; delete updated[field.name]; return updated; });
+    }
+    const card = field.closest<HTMLElement>("[data-card]");
+    const index = Number(card?.dataset.card);
+    if (!card || index < 1 || index > 2 || index !== activeCard) return;
+    const fields = Array.from(card.querySelectorAll<HTMLInputElement | HTMLSelectElement>("input[required], select[required]"));
+    if (fields.length && fields.every((field) => field.validity.valid)) navigate(index + 1);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (selectedInterests.length !== 3) {
-      setInterestError("Choose your top three training interests.");
-      return;
-    }
-
+    if (!validateThrough(3)) return;
     if (isSubmitting) return;
     setNotice("");
     setIsSubmitting(true);
@@ -200,24 +272,40 @@ export function QuestionnaireForm() {
   }
 
   return (
-    <form aria-busy={isSubmitting} onSubmit={handleSubmit} className="grid gap-8">
-      {/* Edit questionnaire choices and labels in the arrays above. */}
-      <section className="border border-champagne/24 bg-graphite p-5 sm:p-7">
+    <ValidationContext.Provider value={errors}>
+    <form noValidate aria-busy={isSubmitting} onSubmit={handleSubmit} onChange={advanceCompletedCard} className="min-w-0 space-y-5">
+      <nav aria-label="Questionnaire sections" className="flex items-center gap-2">
+        {cardNames.map((name, index) => (
+          <button key={name} type="button" aria-label={`Section ${index + 1}: ${name}`} aria-current={activeCard === index ? "step" : undefined} onClick={() => navigate(index)} className="flex min-h-11 flex-1 items-center py-3 focus-visible:outline focus-visible:outline-champagne">
+            <span className={`h-1 w-full rounded-full transition-colors ${activeCard === index ? "bg-champagne" : "bg-bone/15"}`} />
+          </button>
+        ))}
+      </nav>
+      <p aria-live="polite" className="text-sm text-bone/60">{activeCard + 1} of 4 · {cardNames[activeCard]} <span className="float-right text-xs">Complete choices or use Next</span></p>
+      {Object.keys(errors).length > 0 ? <p role="alert" className="rounded-xl border border-champagne/40 p-4 text-sm text-champagne">Please complete the highlighted answers before continuing.</p> : null}
+      <div ref={cardsRef} onScroll={(event) => {
+        const container = event.currentTarget;
+        const first = container.children[0] as HTMLElement;
+        if (first) setActiveCard(Math.max(0, Math.min(3, Math.round(container.scrollLeft / (first.offsetWidth + 16)))));
+      }} className="relative flex snap-x snap-mandatory items-start gap-4 overflow-x-auto rounded-3xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+
+      <section data-card="0" tabIndex={-1} aria-label="Your direction" className="max-h-[65svh] w-full min-w-0 shrink-0 snap-start overflow-y-auto overscroll-y-contain rounded-3xl border border-bone/10 bg-graphite p-5 outline-none sm:p-8 ">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-semibold tracking-[0.28em] text-champagne">
-              Step One
+              01 / Your direction
             </p>
             <h2 className="mt-2 font-display text-3xl leading-tight text-bone">
-              Pick your top three training interests.
+              What would you like to work on?
             </h2>
           </div>
           <p className="text-xs font-semibold tracking-[0.18em] text-bone/54">
-            {selectedInterests.length}/3 Selected
+            {selectedInterests.length}/3 chosen
           </p>
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <p className="mt-3 text-sm text-bone/55">Choose three priorities to continue automatically. You can go back to edit.</p>
+        <div className="mt-6 flex flex-wrap gap-2">
           {trainingInterestOptions.map((interest) => {
             const isSelected = selectedInterests.includes(interest);
 
@@ -227,7 +315,7 @@ export function QuestionnaireForm() {
                 type="button"
                 onClick={() => toggleInterest(interest)}
                 aria-pressed={isSelected}
-                className={`min-h-12 border px-4 text-left text-sm font-semibold tracking-[0.1em] transition ${
+                className={`min-h-12 rounded-full border px-5 text-left text-sm transition ${
                   isSelected
                     ? "border-champagne bg-champagne text-ink"
                     : "border-bone/14 bg-ink text-bone/72 hover:border-champagne hover:text-bone"
@@ -244,10 +332,10 @@ export function QuestionnaireForm() {
         ) : null}
       </section>
 
-      <section className="grid gap-5 border border-bone/10 bg-graphite/72 p-5 sm:p-7">
+      <section data-card="1" tabIndex={-1} aria-label="Your rhythm" className="max-h-[65svh] w-full min-w-0 shrink-0 snap-start overflow-y-auto overscroll-y-contain rounded-3xl border border-bone/10 bg-graphite p-5 outline-none sm:p-8 grid gap-7">
         <div>
           <p className="text-xs font-semibold tracking-[0.28em] text-champagne">
-            Coaching Fit
+            02 / Your rhythm
           </p>
           <h2 className="mt-2 font-display text-2xl leading-tight text-bone">
             Choose the structure that feels closest.
@@ -269,14 +357,15 @@ export function QuestionnaireForm() {
         </div>
       </section>
 
-      <section className="grid gap-5 border border-bone/10 bg-graphite/72 p-5 sm:p-7">
+      <section data-card="2" tabIndex={-1} aria-label="How you feel" className="max-h-[65svh] w-full min-w-0 shrink-0 snap-start overflow-y-auto overscroll-y-contain rounded-3xl border border-bone/10 bg-graphite p-5 outline-none sm:p-8 grid gap-7">
         <div>
           <p className="text-xs font-semibold tracking-[0.28em] text-champagne">
-            Baseline
+            03 / How you feel
           </p>
           <h2 className="mt-2 font-display text-2xl leading-tight text-bone">
-            Give the quick read on what needs support.
+            A quick check-in with yourself.
           </h2>
+          <p className="mt-3 text-sm leading-6 text-bone/55">Think about the past two weeks. Tap a number for each question.</p>
         </div>
         <div className="grid gap-5 md:grid-cols-2">
           <FieldSelect label="Biggest Blocker" name="biggestBlocker" options={blockerOptions} />
@@ -285,74 +374,86 @@ export function QuestionnaireForm() {
             name="nutritionRecovery"
             options={nutritionOptions}
           />
-          <FieldSelect label="Sleep Quality" name="sleepQuality" options={sleepOptions} />
-          <FieldSelect label="Stress Level" name="stressLevel" options={stressOptions} />
+
+        </div>
+        <div className="mt-3 grid gap-9">
+          <Rating label="How consistent has your training felt?" name="trainingConsistency" low="Not consistent" high="Very consistent" />
+          <Rating label="How supported do you feel by your eating habits?" name="nutritionConfidence" low="Need a lot of support" high="Feel confident" />
+          <Rating label="How restorative has your sleep been?" name="sleepQuality" low="Not restorative" high="Fully rested" />
+          <Rating label="How much stress are you carrying?" name="stressLevel" low="Very little" high="Overwhelming" />
         </div>
       </section>
 
-      <section className="grid gap-5 border border-bone/10 bg-graphite/72 p-5 sm:p-7">
+      <section data-card="3" tabIndex={-1} aria-label="Stay connected" className="max-h-[65svh] w-full min-w-0 shrink-0 snap-start overflow-y-auto overscroll-y-contain rounded-3xl border border-bone/10 bg-graphite p-5 outline-none sm:p-8 grid gap-7">
         <div>
           <p className="text-xs font-semibold tracking-[0.28em] text-champagne">
-            Contact
+            04 / Stay connected
           </p>
           <h2 className="mt-2 font-display text-2xl leading-tight text-bone">
             Where should Eduardo send next steps?
           </h2>
         </div>
         <div className="grid gap-5 md:grid-cols-2">
-          <label className="grid gap-3 text-xs font-semibold tracking-[0.2em] text-bone/72">
+          <label className="grid gap-3 text-sm text-bone/70">
             Full Name
             <input
               required
               name="name"
+              aria-invalid={!!errors.name}
+              aria-describedby={errors.name ? "name-error" : undefined}
               type="text"
-              className="min-h-12 border border-bone/14 bg-graphite px-4 text-base tracking-normal text-bone outline-none transition focus:border-champagne"
+              className="min-h-12 rounded-xl border border-bone/14 bg-graphite px-4 text-base tracking-normal text-bone outline-none transition focus:border-champagne"
             />
+            <FieldError name="name" />
           </label>
-          <label className="grid gap-3 text-xs font-semibold tracking-[0.2em] text-bone/72">
+          <label className="grid gap-3 text-sm text-bone/70">
             Email
             <input
               required
               name="email"
+              aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? "email-error" : undefined}
               type="email"
-              className="min-h-12 border border-bone/14 bg-graphite px-4 text-base tracking-normal text-bone outline-none transition focus:border-champagne"
+              className="min-h-12 rounded-xl border border-bone/14 bg-graphite px-4 text-base tracking-normal text-bone outline-none transition focus:border-champagne"
             />
+            <FieldError name="email" />
           </label>
-          <label className="grid gap-3 text-xs font-semibold tracking-[0.2em] text-bone/72">
+          <label className="grid gap-3 text-sm text-bone/70">
             Phone
             <input
               name="phone"
               type="tel"
-              className="min-h-12 border border-bone/14 bg-graphite px-4 text-base tracking-normal text-bone outline-none transition focus:border-champagne"
+              className="min-h-12 rounded-xl border border-bone/14 bg-graphite px-4 text-base tracking-normal text-bone outline-none transition focus:border-champagne"
             />
           </label>
         </div>
-        <label className="grid gap-3 text-xs font-semibold tracking-[0.2em] text-bone/72">
+        <label className="grid gap-3 text-sm text-bone/70">
           Anything Else?
           <textarea
             name="notes"
             rows={4}
-            className="border border-bone/14 bg-graphite px-4 py-3 text-base leading-7 tracking-normal text-bone outline-none transition focus:border-champagne"
+            className="rounded-xl border border-bone/14 bg-graphite px-4 py-3 text-base leading-7 tracking-normal text-bone outline-none transition focus:border-champagne"
             placeholder="Optional: timeline, injuries, schedule limits, or anything you want reviewed."
           />
         </label>
       </section>
 
+      </div>
+      <div className="flex items-center justify-between gap-4">
+        <button type="button" disabled={activeCard === 0 || isSubmitting} onClick={() => goToCard(activeCard - 1)} className="min-h-12 rounded-full border border-bone/20 px-6 text-sm text-bone disabled:opacity-30">Back</button>
+        {activeCard < 3 ? (
+          <button type="button" onClick={() => navigate(activeCard + 1)} className="min-h-12 rounded-full bg-champagne px-8 text-sm font-semibold text-ink">Next →</button>
+        ) : (
+          <button type="submit" disabled={isSubmitting} className="min-h-12 rounded-full bg-champagne px-6 text-sm font-semibold text-ink disabled:opacity-50">{isSubmitting ? "Submitting…" : "Submit Questionnaire"}</button>
+        )}
+      </div>
       {notice ? (
         <div role="alert" className="border border-champagne/40 bg-graphite p-5 text-sm leading-7 text-bone">
           <p>{notice}</p>
-          <a href={consultationUrl} className="mt-2 inline-block text-champagne underline">
-            Book a consultation instead
-          </a>
         </div>
       ) : null}
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="min-h-14 border border-champagne bg-champagne px-8 text-sm font-semibold tracking-[0.2em] text-ink transition hover:border-bone hover:bg-bone disabled:cursor-not-allowed disabled:opacity-60 md:w-fit"
-      >
-        {isSubmitting ? "Submitting..." : "Submit Questionnaire"}
-      </button>
+
     </form>
+    </ValidationContext.Provider>
   );
 }
