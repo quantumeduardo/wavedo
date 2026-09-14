@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CartItem, readCart, saveCart } from "@/lib/cart-storage";
 const product = {
   name: "Wavēdo Training Hoodie",
@@ -13,16 +13,6 @@ const product = {
 const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
 
-
-function safePaymentLink(value: string) {
-  try { const url = new URL(value.trim()); return url.protocol === "https:" && !url.username && !url.password ? url.href : ""; } catch { return ""; }
-}
-const paymentMethods = [
-  { id: "card", label: "Card", href: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK ?? "" },
-  { id: "paypal", label: "PayPal", href: process.env.NEXT_PUBLIC_PAYPAL_PAYMENT_LINK ?? "" },
-  { id: "venmo", label: "Venmo", href: process.env.NEXT_PUBLIC_VENMO_PAYMENT_LINK ?? "" },
-  { id: "cashapp", label: "Cash App", href: process.env.NEXT_PUBLIC_CASHAPP_PAYMENT_LINK ?? "" },
-].map((method) => ({ ...method, href: safePaymentLink(method.href) }));
 
 type CartProps = {
   initialSize?: string;
@@ -47,48 +37,33 @@ export function Cart({ initialSize }: CartProps) {
   const subtotal = useMemo(() => product.price * quantity, [quantity]);
   const shipping = subtotal >= 100 ? 0 : 12;
   const total = subtotal + shipping;
-  const selectedPayment = paymentMethods.find((method) => method.href) ?? paymentMethods[0];
-
-  const submitCheckout = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!selectedPayment.href) return;
-    const formData = new FormData(event.currentTarget);
-    const fields = Object.fromEntries(formData.entries());
-    const notificationPayload = {
-      type: "order",
-      subject: "New Wavēdo Hoodie Order",
-      fields: {
-        ...fields,
-        product: product.name,
-        color: product.color,
-        size: selectedSize,
-        quantity,
-        subtotal: `$${subtotal}`,
-        shipping: shipping === 0 ? "Included" : `$${shipping}`,
-        total: `$${total}`,
-        paymentMethod: selectedPayment.label,
-      },
-    };
-
-    if (selectedPayment.href) {
-      navigator.sendBeacon?.(
-        "/api/notify",
-        new Blob([JSON.stringify(notificationPayload)], {
-          type: "application/json",
-        }),
-      );
-      window.location.href = selectedPayment.href;
-      return;
+  const [error, setError] = useState("");
+  const [checkingOut, setCheckingOut] = useState(false);
+  const checkoutLock = useRef(false);
+  const attempt = useRef<{ cart: string; id: string } | null>(null);
+  async function checkout() {
+    if (checkoutLock.current) return;
+    checkoutLock.current = true;
+    setCheckingOut(true);
+    setError("");
+    const cart = JSON.stringify(items);
+    if (attempt.current?.cart !== cart) attempt.current = { cart, id: crypto.randomUUID() };
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items, attempt: attempt.current.id }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message ?? "Checkout could not be started.");
+      const destination = new URL(result.url);
+      if (destination.protocol !== "https:" || destination.hostname !== "checkout.stripe.com") throw new Error("Checkout could not be opened.");
+      window.location.assign(destination.href);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Checkout could not be started. Your cart is saved.");
+      setCheckingOut(false);
+      checkoutLock.current = false;
     }
-
-    fetch("/api/notify", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(notificationPayload),
-    });
-  };
+  }
 
   if (!cartReady) return <p role="status" className="bg-ink p-8 text-bone">Loading your cart…</p>;
   if (!items.length) return (
@@ -101,72 +76,19 @@ export function Cart({ initialSize }: CartProps) {
   return (
     <section className="min-h-screen bg-ink px-4 py-12 text-bone sm:px-6 sm:py-20 lg:px-8">
       <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1fr_0.72fr] lg:items-start">
-        <form onSubmit={submitCheckout} className="space-y-10">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-bone/48 sm:tracking-[0.34em]">
-              Checkout
-            </p>
-            <h1 className="mt-5 font-display text-4xl leading-tight sm:text-6xl">
-              Shipping Information
-            </h1>
-          </div>
-
-          <section aria-labelledby="express-checkout" className="rounded-2xl border border-bone/20 p-5 sm:p-7">
-            <h2 id="express-checkout" className="text-center text-sm font-semibold uppercase tracking-[0.18em]">Express checkout</h2>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              {paymentMethods.map((method) => {
-                const label = method.id === "card" ? "Card & wallets" : method.label;
-                const styles = "flex min-h-14 items-center justify-center rounded-lg border border-bone/20 px-5 text-sm font-semibold";
-                return method.href ? (
-                  <a key={method.id} href={method.href} className={`${styles} bg-bone text-ink transition hover:bg-champagne`}>{label} ↗</a>
-                ) : (
-                  <button key={method.id} type="button" disabled className={`${styles} cursor-not-allowed text-bone/40`} aria-label={`${label} unavailable`}>{label} · Unavailable</button>
-                );
-              })}
-            </div>
-            {paymentMethods[0].href ? <p className="mt-4 text-center text-xs leading-6 text-bone/60">Apple Pay is available in Stripe checkout on supported devices when enabled.</p> : null}
-            <p className="mt-3 text-center text-xs leading-6 text-bone/60">Continue directly to your payment provider. Confirm your size, quantity, shipping address, and final total there before paying.</p>
-            <p className="mt-2 text-center text-xs leading-6 text-bone/50">Selected here: {selectedSize} · {quantity} {quantity === 1 ? "hoodie" : "hoodies"}. These selections are not automatically transferred to payment links.</p>
-          </section>
-          <div className="flex items-center gap-4 text-xs uppercase tracking-wider text-bone/50"><span className="h-px flex-1 bg-bone/15" />Or enter shipping details<span className="h-px flex-1 bg-bone/15" /></div>
-
-          {/* Shipping form fields can be connected to a backend, CRM, or payment provider later. */}
-          <div className="grid gap-px border border-bone/12 bg-bone/12 sm:grid-cols-2">
-            {[
-              ["First Name", "firstName", "text"],
-              ["Last Name", "lastName", "text"],
-              ["Email", "email", "email"],
-              ["Phone", "phone", "tel"],
-              ["Address", "address", "text"],
-              ["Apt / Suite", "apartment", "text"],
-              ["City", "city", "text"],
-              ["State", "state", "text"],
-              ["ZIP Code", "zip", "text"],
-              ["Country", "country", "text"],
-            ].map(([label, name, type]) => (
-              <label key={name} className="bg-[#090909] p-5">
-                <span className="text-xs uppercase tracking-[0.18em] text-bone/42 sm:tracking-[0.24em]">
-                  {label}
-                </span>
-                <input
-                  required={name !== "apartment"}
-                  name={name}
-                  type={type}
-                  defaultValue={name === "country" ? "United States" : ""}
-                  className="mt-4 min-h-12 w-full border border-bone/12 bg-ink px-4 text-sm text-bone outline-none transition focus:border-champagne"
-                />
-              </label>
-            ))}
-          </div>
-
-          <button
-            type="submit"
-            disabled={!selectedPayment.href}
-            className="inline-flex min-h-12 w-full items-center justify-center bg-bone px-6 text-center text-sm font-semibold uppercase tracking-[0.14em] text-ink transition hover:bg-champagne disabled:cursor-not-allowed disabled:opacity-40 sm:px-9 sm:tracking-[0.18em]"
-          >
-            Continue with {selectedPayment.label}
+        <section className="space-y-7" aria-busy={checkingOut}>
+          <p className="text-xs uppercase tracking-[0.24em] text-bone/60">Checkout</p>
+          <h1 className="font-display text-4xl sm:text-6xl">Your next layer.</h1>
+          <p className="text-sm leading-7 text-bone/65">Your selected sizes and quantities carry through to secure checkout. Enter your shipping address and payment details there.</p>
+          <p className="text-sm text-bone/70">{selectedSize}</p>
+          <button type="button" onClick={checkout} disabled={checkingOut || quantity > 20} className="flex min-h-14 w-full items-center justify-center rounded-lg bg-bone px-6 text-sm font-semibold text-ink hover:bg-champagne disabled:opacity-50">
+            {checkingOut ? "Opening checkout…" : "Continue to secure checkout"}
           </button>
-        </form>
+          <p className="text-xs leading-6 text-bone/55">Pay by card, or use Apple Pay when available in Stripe. Shipping within the United States is included.</p>
+          {quantity > 20 ? <p role="alert" className="text-sm text-champagne">Please limit each order to 20 hoodies.</p> : null}
+          {error ? <p role="alert" className="rounded-xl border border-champagne/40 p-4 text-sm text-champagne">{error}</p> : null}
+          <a href="/shop" className="inline-flex min-h-11 items-center text-sm text-bone/65">← Continue shopping</a>
+        </section>
 
         <aside className="lg:sticky lg:top-8">
           <div className="border border-bone/12 bg-[#070707] p-5">
@@ -194,9 +116,9 @@ export function Cart({ initialSize }: CartProps) {
                 <div key={item.size} className="flex flex-wrap items-center justify-between gap-4 py-5">
                   <div><p>Size {item.size}</p><p className="text-xs text-bone/60">Line total: {item.quantity * product.price} USD</p></div>
                   <div className="flex items-center gap-2">
-                    <button type="button" aria-label={(item.quantity === 1 ? "Remove size " : "Decrease size ") + item.size} onClick={() => changeQuantity(item.size, -1)} className="min-h-11 min-w-11 border border-bone/20">−</button>
+                    <button type="button" aria-label={(item.quantity === 1 ? "Remove size " : "Decrease size ") + item.size} disabled={checkingOut} onClick={() => changeQuantity(item.size, -1)} className="min-h-11 min-w-11 border border-bone/20">−</button>
                     <span aria-live="polite" className="min-w-8 text-center">{item.quantity}</span>
-                    <button type="button" aria-label={"Increase " + item.size} onClick={() => changeQuantity(item.size, 1)} className="min-h-11 min-w-11 border border-bone/20">+</button>
+                    <button type="button" aria-label={"Increase " + item.size} disabled={checkingOut || quantity >= 20} onClick={() => changeQuantity(item.size, 1)} className="min-h-11 min-w-11 border border-bone/20">+</button>
                   </div>
                 </div>
               ))}

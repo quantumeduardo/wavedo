@@ -8,12 +8,16 @@
     "start": "next start",
     "lint": "next lint",
     "check:notifications": "node scripts/check-notification-env.mjs",
-    "test:notifications": "node scripts/test-notifications.mjs"
+    "test:notifications": "node scripts/test-notifications.mjs",
+    "test:checkout": "node scripts/test-checkout.mjs",
+    "check:checkout": "node scripts/check-checkout-env.mjs"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
     "next": "^16.2.4",
     "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react-dom": "^19.2.5",
+    "stripe": "^22.6.2"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",

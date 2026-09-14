@@ -96,6 +96,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ delivered: false, message: "Please check your form details and email address." }, { status: 400 });
   }
 
+  if (payload.type === "order") {
+    return NextResponse.json({ delivered: false, message: "Orders are confirmed through secure checkout." }, { status: 400 });
+  }
   const fields = payload.fields;
   const subject = payload.subject ?? `Wavēdo ${payload.type ?? "notification"}`;
   const { apiKey: resendApiKey, to: notificationTo, from: notificationFrom, issues } = validateNotificationConfig(process.env);
