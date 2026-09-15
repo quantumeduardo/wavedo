@@ -1,7 +1,7 @@
 import { Shop } from "@/components/Shop";
 import { CartLink } from "@/components/CartLink";
 import { coachingUrl, shopUrl } from "@/lib/site-links";
-export const metadata = { title: "Shop | Wavēdo", description: "Shop the Wavēdo Training Hoodie. Limited Drop 01." };
+export const metadata = { title: "Shop | Wavēdo", description: "Shop the Wavedo 520. Limited Drop 01." };
 export default function ShopPage() {
   return (
     <main className="min-h-screen bg-ink font-mono text-bone">

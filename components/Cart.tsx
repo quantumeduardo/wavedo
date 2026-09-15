@@ -4,10 +4,10 @@ import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { CartItem, readCart, saveCart } from "@/lib/cart-storage";
 const product = {
-  name: "Wavēdo Training Hoodie",
+  name: "Wavedo 520",
   price: 100,
-  image: "/images/wavedo-hoodie-front.png",
-  color: "Bottle Green / Black",
+  image: "/images/wavedo-hoodie-jet-black-front.png",
+  color: "Jet Black",
 };
 
 const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
@@ -173,7 +173,7 @@ export function Cart({ initialSize }: CartProps) {
             <div className="relative min-h-[260px] overflow-hidden bg-black sm:min-h-[360px]">
               <Image
                 src={product.image}
-                alt="Wavēdo Training Hoodie"
+                alt="Wavedo 520"
                 fill
                 unoptimized
                 className="object-contain"
