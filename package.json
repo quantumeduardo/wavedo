@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "check:notifications": "node scripts/check-notification-env.mjs",
-    "test:notifications": "node scripts/test-notifications.mjs"
+    "test:notifications": "node scripts/test-notifications.mjs",
+    "test:checkout": "node scripts/test-checkout.mjs"
   },
   "dependencies": {
     "next": "^16.2.4",

@@ -1,28 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { CartItem, readCart, saveCart } from "@/lib/cart-storage";
+import { cartSizes as sizes, maxQuantity, totals, unitAmount } from "@/lib/checkout";
 const product = {
   name: "Wavedo 520",
-  price: 100,
+  price: unitAmount / 100,
   image: "/images/wavedo-hoodie-jet-black-front.png",
   color: "Jet Black",
 };
-
-const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
-
-
-
-function safePaymentLink(value: string) {
-  try { const url = new URL(value.trim()); return url.protocol === "https:" && !url.username && !url.password ? url.href : ""; } catch { return ""; }
-}
-const paymentMethods = [
-  { id: "card", label: "Card", href: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK ?? "" },
-  { id: "paypal", label: "PayPal", href: process.env.NEXT_PUBLIC_PAYPAL_PAYMENT_LINK ?? "" },
-  { id: "venmo", label: "Venmo", href: process.env.NEXT_PUBLIC_VENMO_PAYMENT_LINK ?? "" },
-  { id: "cashapp", label: "Cash App", href: process.env.NEXT_PUBLIC_CASHAPP_PAYMENT_LINK ?? "" },
-].map((method) => ({ ...method, href: safePaymentLink(method.href) }));
 
 type CartProps = {
   initialSize?: string;
@@ -42,52 +29,50 @@ export function Cart({ initialSize }: CartProps) {
   function changeQuantity(size: string, delta: number) {
     setItems((current) => current.map((item) => item.size === size ? { ...item, quantity: item.quantity + delta } : item).filter((item) => item.quantity > 0));
   }
-  const quantity = items.reduce((sum, item) => sum + item.quantity, 0);
-  const selectedSize = items.map((item) => item.size + " × " + item.quantity).join(", ");
-  const subtotal = useMemo(() => product.price * quantity, [quantity]);
-  const shipping = subtotal >= 100 ? 0 : 12;
-  const total = subtotal + shipping;
-  const selectedPayment = paymentMethods.find((method) => method.href) ?? paymentMethods[0];
-
-  const submitCheckout = (event: FormEvent<HTMLFormElement>) => {
+  const { subtotal: subtotalCents, shipping: shippingCents, total: totalCents } = totals(items);
+  const subtotal = subtotalCents / 100;
+  const shipping = shippingCents / 100;
+  const total = totalCents / 100;
+  const [pending, setPending] = useState(false);
+  const [message, setMessage] = useState("");
+  const [preview, setPreview] = useState(false);
+  const busy = useRef(false);
+  const attempt = useRef("");
+  useEffect(() => {
+    const status = new URLSearchParams(window.location.search).get("checkout");
+    if (status === "cancelled") setMessage("Payment checkout was cancelled. Your cart is saved.");
+    if (status === "returned") setMessage("You returned from payment checkout. Check your Stripe receipt for payment status. Your cart has been kept for reference; do not pay again if already paid.");
+  }, []);
+  const submitCheckout = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!selectedPayment.href) return;
-    const formData = new FormData(event.currentTarget);
-    const fields = Object.fromEntries(formData.entries());
-    const notificationPayload = {
-      type: "order",
-      subject: "New Wavēdo Hoodie Order",
-      fields: {
-        ...fields,
-        product: product.name,
-        color: product.color,
-        size: selectedSize,
-        quantity,
-        subtotal: `$${subtotal}`,
-        shipping: shipping === 0 ? "Included" : `$${shipping}`,
-        total: `$${total}`,
-        paymentMethod: selectedPayment.label,
-      },
-    };
-
-    if (selectedPayment.href) {
-      navigator.sendBeacon?.(
-        "/api/notify",
-        new Blob([JSON.stringify(notificationPayload)], {
-          type: "application/json",
-        }),
-      );
-      window.location.href = selectedPayment.href;
-      return;
+    if (busy.current) return;
+    busy.current = true;
+    setPending(true);
+    setMessage("");
+    setPreview(false);
+    attempt.current ||= crypto.randomUUID();
+    const shipping = Object.fromEntries(new FormData(event.currentTarget).entries());
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items, shipping, attemptId: attempt.current }),
+        signal: AbortSignal.timeout(15000),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        setPreview(result.setupRequired === true);
+        setMessage(result.message || "Checkout is unavailable. Please try again.");
+        return;
+      }
+      const url = new URL(result.url);
+      if (url.protocol !== "https:" || url.hostname !== "checkout.stripe.com") throw new Error("Invalid checkout URL");
+      window.location.assign(url.href);
+    } catch {
+      setMessage("Could not open checkout. Your cart and shipping details are still here. Please try again.");
+    } finally {
+      busy.current = false;
+      setPending(false);
     }
-
-    fetch("/api/notify", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(notificationPayload),
-    });
   };
 
   if (!cartReady) return <p role="status" className="bg-ink p-8 text-bone">Loading your cart…</p>;
@@ -111,26 +96,12 @@ export function Cart({ initialSize }: CartProps) {
             </h1>
           </div>
 
-          <section aria-labelledby="express-checkout" className="rounded-2xl border border-bone/20 p-5 sm:p-7">
-            <h2 id="express-checkout" className="text-center text-sm font-semibold uppercase tracking-[0.18em]">Express checkout</h2>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              {paymentMethods.map((method) => {
-                const label = method.id === "card" ? "Card & wallets" : method.label;
-                const styles = "flex min-h-14 items-center justify-center rounded-lg border border-bone/20 px-5 text-sm font-semibold";
-                return method.href ? (
-                  <a key={method.id} href={method.href} className={`${styles} bg-bone text-ink transition hover:bg-champagne`}>{label} ↗</a>
-                ) : (
-                  <button key={method.id} type="button" disabled className={`${styles} cursor-not-allowed text-bone/40`} aria-label={`${label} unavailable`}>{label} · Unavailable</button>
-                );
-              })}
-            </div>
-            {paymentMethods[0].href ? <p className="mt-4 text-center text-xs leading-6 text-bone/60">Apple Pay is available in Stripe checkout on supported devices when enabled.</p> : null}
-            <p className="mt-3 text-center text-xs leading-6 text-bone/60">Continue directly to your payment provider. Confirm your size, quantity, shipping address, and final total there before paying.</p>
-            <p className="mt-2 text-center text-xs leading-6 text-bone/50">Selected here: {selectedSize} · {quantity} {quantity === 1 ? "hoodie" : "hoodies"}. These selections are not automatically transferred to payment links.</p>
+          <section className="rounded-2xl border border-bone/20 p-5 sm:p-7">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.18em]">Secure payment</h2>
+            <p className="mt-3 text-sm text-bone/60">Your sizes, quantities, shipping details, and total will be sent to Stripe. Choose from the payment methods available there.</p>
           </section>
-          <div className="flex items-center gap-4 text-xs uppercase tracking-wider text-bone/50"><span className="h-px flex-1 bg-bone/15" />Or enter shipping details<span className="h-px flex-1 bg-bone/15" /></div>
-
-          {/* Shipping form fields can be connected to a backend, CRM, or payment provider later. */}
+          {message && <p role="status" className="border border-bone/20 p-5 text-sm">{message}</p>}
+          {preview && <p className="text-sm text-bone/60">Order preview: {items.map(item => `${item.size} × ${item.quantity}`).join(", ")} · Shipping {shipping === 0 ? "included" : `$${shipping}`} · Total ${total} USD. You can edit your cart and retry when payments are available.</p>}
           <div className="grid gap-px border border-bone/12 bg-bone/12 sm:grid-cols-2">
             {[
               ["First Name", "firstName", "text"],
@@ -146,13 +117,15 @@ export function Cart({ initialSize }: CartProps) {
             ].map(([label, name, type]) => (
               <label key={name} className="bg-[#090909] p-5">
                 <span className="text-xs uppercase tracking-[0.18em] text-bone/42 sm:tracking-[0.24em]">
-                  {label}
+                  {name === "country" ? "Country (two-letter code)" : label}
                 </span>
                 <input
+                  disabled={pending}
+                  maxLength={200}
                   required={name !== "apartment"}
                   name={name}
                   type={type}
-                  defaultValue={name === "country" ? "United States" : ""}
+                  defaultValue={name === "country" ? "US" : ""}
                   className="mt-4 min-h-12 w-full border border-bone/12 bg-ink px-4 text-sm text-bone outline-none transition focus:border-champagne"
                 />
               </label>
@@ -161,10 +134,10 @@ export function Cart({ initialSize }: CartProps) {
 
           <button
             type="submit"
-            disabled={!selectedPayment.href}
+            disabled={pending}
             className="inline-flex min-h-12 w-full items-center justify-center bg-bone px-6 text-center text-sm font-semibold uppercase tracking-[0.14em] text-ink transition hover:bg-champagne disabled:cursor-not-allowed disabled:opacity-40 sm:px-9 sm:tracking-[0.18em]"
           >
-            Continue with {selectedPayment.label}
+            {pending ? "Opening checkout…" : "Continue to payment"}
           </button>
         </form>
 
@@ -194,9 +167,9 @@ export function Cart({ initialSize }: CartProps) {
                 <div key={item.size} className="flex flex-wrap items-center justify-between gap-4 py-5">
                   <div><p>Size {item.size}</p><p className="text-xs text-bone/60">Line total: {item.quantity * product.price} USD</p></div>
                   <div className="flex items-center gap-2">
-                    <button type="button" aria-label={(item.quantity === 1 ? "Remove size " : "Decrease size ") + item.size} onClick={() => changeQuantity(item.size, -1)} className="min-h-11 min-w-11 border border-bone/20">−</button>
+                    <button type="button" aria-label={(item.quantity === 1 ? "Remove size " : "Decrease size ") + item.size} disabled={pending} onClick={() => changeQuantity(item.size, -1)} className="min-h-11 min-w-11 border border-bone/20">−</button>
                     <span aria-live="polite" className="min-w-8 text-center">{item.quantity}</span>
-                    <button type="button" aria-label={"Increase " + item.size} onClick={() => changeQuantity(item.size, 1)} className="min-h-11 min-w-11 border border-bone/20">+</button>
+                    <button type="button" aria-label={"Increase " + item.size} disabled={pending || item.quantity >= maxQuantity} onClick={() => changeQuantity(item.size, 1)} className="min-h-11 min-w-11 border border-bone/20">+</button>
                   </div>
                 </div>
               ))}
