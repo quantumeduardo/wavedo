@@ -1,5 +1,6 @@
 const cartKey = "wavedo.cart.v1";
-export const cartSizes = ["XS", "S", "M", "L", "XL", "XXL"];
+import { cartSizes, maxQuantity } from "./checkout";
+export { cartSizes };
 export type CartItem = { size: string; quantity: number };
 export type SavedCart = CartItem & { items: CartItem[] };
 function validItem(value: CartItem) {
@@ -26,7 +27,7 @@ export function addToCart(size: string): SavedCart {
   const selectedSize = cartSizes.includes(size) ? size : "M";
   const items = (readCart()?.items ?? []).map((item) => ({ ...item }));
   let selected = items.find((item) => item.size === selectedSize);
-  if (selected) selected.quantity += 1;
+  if (selected) selected.quantity = Math.min(maxQuantity, selected.quantity + 1);
   else { selected = { size: selectedSize, quantity: 1 }; items.push(selected); }
   const next = { ...selected, items };
   saveCart(next);

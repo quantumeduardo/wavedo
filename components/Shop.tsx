@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import { addToCart, readCart } from "@/lib/cart-storage";
+import { cartSizes as sizes, unitAmount } from "@/lib/checkout";
 import { coachingUrl } from "@/lib/site-links";
 import { useEffect, useState } from "react";
 
 const shopItem = {
   name: "Wavedo 520",
-  price: "$100",
+  price: `$${unitAmount / 100}`,
   eyebrow: "Limited Drop 01",
   description:
     "Heavyweight 520 GSM, 100% organic cotton. A clean, baggy silhouette with dropped shoulders, ribbed wrists and waist, and a kangaroo pocket finished with the cream Wavēdo logo.",
@@ -29,7 +30,6 @@ const productPreviews = [
   },
 ];
 
-const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
 export function Shop() {
   const [focusedPreviewIndex, setFocusedPreviewIndex] = useState<number | null>(null);
