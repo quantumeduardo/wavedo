@@ -25,7 +25,7 @@ Run `npm run test:notifications` for isolated configuration and mocked provider 
 
 ## Hoodie checkout
 
-The cart creates a hosted Stripe Checkout Session at `POST /api/checkout`. It reuses the existing $100 USD price, sizes XS–XXL, and shipping rule ($12 below $100; included at $100 or above). Each size is a separate line item. Amounts are calculated server-side in cents; client prices/totals are ignored. Shipping contact/address is attached to the PaymentIntent, email prefills Checkout, and size metadata is included on both the session and payment. Country accepts ISO two-letter codes (the previous United States default also works).
+The cart creates a hosted Stripe Checkout Session at `POST /api/checkout`. It uses the $79.99 USD price, sizes XS–XXL, and shipping rule ($12 below $100; included at $100 or above). Each size is a separate line item. Amounts are calculated server-side in cents; client prices/totals are ignored. Shipping contact/address is attached to the PaymentIntent, email prefills Checkout, and size metadata is included on both the session and payment. Country accepts ISO two-letter codes (the previous United States default also works).
 
 Set the server-only `STRIPE_SECRET_KEY` in `.env.local` or the hosting environment and restart/redeploy. Start with a Stripe test-mode key from the existing Stripe account. No publishable key, SDK, new price IDs, or email configuration is required. The former `NEXT_PUBLIC_*_PAYMENT_LINK` settings cannot carry this order reliably and are no longer used. Configure eligible payment methods in Stripe; availability depends on the account, customer, and device. See [Stripe Checkout Session creation](https://docs.stripe.com/api/checkout/sessions/create).
 

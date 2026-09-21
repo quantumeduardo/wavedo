@@ -1,5 +1,5 @@
 export const cartSizes = ["XS", "S", "M", "L", "XL", "XXL"];
-export const unitAmount = 10000;
+export const unitAmount = 7999;
 export const maxQuantity = 99;
 export type CheckoutItem = { size: string; quantity: number };
 export function totals(items: CheckoutItem[]) {

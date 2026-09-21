@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { unitAmount } from "@/lib/checkout";
 import { readCart } from "@/lib/cart-storage";
 
 export function CartLink() {
@@ -9,7 +10,7 @@ export function CartLink() {
   useEffect(() => {
     function update() {
       const count = (readCart()?.items ?? []).reduce((sum, item) => sum + item.quantity, 0);
-      setSummary({ count, total: count * 100 });
+      setSummary({ count, total: count * unitAmount / 100 });
     }
     update();
     window.addEventListener("storage", update);
@@ -25,7 +26,7 @@ export function CartLink() {
   return (
     <a href="/cart" className="flex min-h-11 flex-wrap items-center justify-end gap-x-3 gap-y-1">
       <span aria-live="polite" className="text-[10px] normal-case text-bone/60">
-        {summary ? `${summary.count} ${summary.count === 1 ? "item" : "items"} · $${summary.total}` : ""}
+        {summary ? `${summary.count} ${summary.count === 1 ? "item" : "items"} · $${summary.total.toFixed(2)}` : ""}
       </span>
       <span>Cart ↗</span>
     </a>

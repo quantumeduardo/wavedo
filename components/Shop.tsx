@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { addToCart, readCart } from "@/lib/cart-storage";
-import { cartSizes as sizes, unitAmount } from "@/lib/checkout";
+import { cartSizes as sizes, unitAmount, maxQuantity } from "@/lib/checkout";
 import { coachingUrl } from "@/lib/site-links";
 import { useEffect, useState } from "react";
 
@@ -34,10 +34,13 @@ const productPreviews = [
 export function Shop() {
   const [focusedPreviewIndex, setFocusedPreviewIndex] = useState<number | null>(null);
   const [activePreviewIndex, setActivePreviewIndex] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [existingItems, setExistingItems] = useState<{size: string; quantity: number}[]>([]);
   const [selectedSize, setSelectedSize] = useState("M");
+  const remaining = Math.max(0, maxQuantity - (existingItems.find(item => item.size === selectedSize)?.quantity ?? 0));
   useEffect(() => {
     const saved = readCart();
-    if (saved) setSelectedSize(saved.size);
+    if (saved) { setSelectedSize(saved.size); setExistingItems(saved.items); }
   }, []);
   const activePreview = productPreviews[activePreviewIndex];
   const focusedPreview =
@@ -118,14 +121,23 @@ export function Shop() {
           <legend className="w-full text-center text-[10px] uppercase text-bone/60">Select size</legend>
           <div className="mt-3 flex justify-center gap-1 sm:gap-3">
             {sizes.map((size) => (
-              <button key={size} type="button" onClick={() => setSelectedSize(size)} aria-pressed={selectedSize === size} className={`min-h-11 min-w-11 border text-xs ${selectedSize === size ? "border-bone bg-bone text-ink" : "border-transparent hover:border-bone/40"}`}>{size}</button>
+              <button key={size} type="button" onClick={() => { setSelectedSize(size); setQuantity(1); }} aria-pressed={selectedSize === size} className={`min-h-11 min-w-11 border text-xs ${selectedSize === size ? "border-bone bg-bone text-ink" : "border-transparent hover:border-bone/40"}`}>{size}</button>
             ))}
           </div>
         </fieldset>
-        <button type="button" onClick={() => {
-          const cart = addToCart(selectedSize);
+        <div className="mt-6 text-center">
+          <p id="quantity-label" className="text-[10px] uppercase text-bone/60">Quantity</p>
+          <div role="group" aria-labelledby="quantity-label" className="mt-3 flex items-center justify-center gap-4">
+            <button type="button" aria-label="Decrease quantity" disabled={quantity <= 1} onClick={() => setQuantity(value => value - 1)} className="min-h-11 min-w-11 border border-bone/30 disabled:opacity-30">−</button>
+            <span aria-live="polite" className="min-w-8 text-sm">{quantity}</span>
+            <button type="button" aria-label="Increase quantity" disabled={quantity >= remaining} onClick={() => setQuantity(value => value + 1)} className="min-h-11 min-w-11 border border-bone/30 disabled:opacity-30">+</button>
+          </div>
+          {remaining === 0 && <p role="status" className="mt-2 text-xs text-bone/60">Your bag already has the maximum of 99 in this size.</p>}
+        </div>
+        <button type="button" disabled={remaining === 0} onClick={() => {
+          const cart = addToCart(selectedSize, Math.min(quantity, remaining));
           window.location.assign(`${shopItem.checkoutUrl}?size=${cart.size}&quantity=${cart.quantity}`);
-        }} className="mt-6 flex min-h-12 w-full items-center justify-center bg-bone px-6 text-xs uppercase text-ink hover:bg-champagne">Add to Cart</button>
+        }} className="mt-6 flex min-h-12 w-full items-center justify-center bg-bone px-6 text-xs uppercase text-ink hover:bg-champagne disabled:opacity-30">Add to Bag</button>
         <a href={`${coachingUrl}/#contact`} className="mx-auto mt-2 flex min-h-11 w-fit items-center text-[10px] uppercase text-bone/60">Size guide ↗</a>
         <div className="mt-6 divide-y divide-bone/15 border-y border-bone/15 text-xs leading-6">
           <details className="py-4">

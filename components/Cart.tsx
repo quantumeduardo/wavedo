@@ -101,7 +101,7 @@ export function Cart({ initialSize }: CartProps) {
             <p className="mt-3 text-sm text-bone/60">Your sizes, quantities, shipping details, and total will be sent to Stripe. Choose from the payment methods available there.</p>
           </section>
           {message && <p role="status" className="border border-bone/20 p-5 text-sm">{message}</p>}
-          {preview && <p className="text-sm text-bone/60">Order preview: {items.map(item => `${item.size} × ${item.quantity}`).join(", ")} · Shipping {shipping === 0 ? "included" : `$${shipping}`} · Total ${total} USD. You can edit your cart and retry when payments are available.</p>}
+          {preview && <p className="text-sm text-bone/60">Order preview: {items.map(item => `${item.size} × ${item.quantity}`).join(", ")} · Shipping {shipping === 0 ? "included" : `$${shipping.toFixed(2)}`} · Total ${total.toFixed(2)} USD. You can edit your cart and retry when payments are available.</p>}
           <div className="grid gap-px border border-bone/12 bg-bone/12 sm:grid-cols-2">
             {[
               ["First Name", "firstName", "text"],
@@ -165,7 +165,7 @@ export function Cart({ initialSize }: CartProps) {
             <div className="mt-7 divide-y divide-bone/15 border-y border-bone/15">
               {items.map((item) => (
                 <div key={item.size} className="flex flex-wrap items-center justify-between gap-4 py-5">
-                  <div><p>Size {item.size}</p><p className="text-xs text-bone/60">Line total: {item.quantity * product.price} USD</p></div>
+                  <div><p>Size {item.size}</p><p className="text-xs text-bone/60">Line total: {(item.quantity * unitAmount / 100).toFixed(2)} USD</p></div>
                   <div className="flex items-center gap-2">
                     <button type="button" aria-label={(item.quantity === 1 ? "Remove size " : "Decrease size ") + item.size} disabled={pending} onClick={() => changeQuantity(item.size, -1)} className="min-h-11 min-w-11 border border-bone/20">−</button>
                     <span aria-live="polite" className="min-w-8 text-center">{item.quantity}</span>
@@ -178,15 +178,15 @@ export function Cart({ initialSize }: CartProps) {
             <div className="mt-6 space-y-4 text-sm text-bone/58">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>${subtotal}</span>
+                <span>${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Shipping</span>
-                <span>{shipping === 0 ? "Included" : `$${shipping}`}</span>
+                <span>{shipping === 0 ? "Included" : `$${shipping.toFixed(2)}`}</span>
               </div>
               <div className="flex justify-between border-t border-bone/12 pt-5 font-display text-3xl text-bone">
                 <span>Total</span>
-                <span>${total}</span>
+                <span>${total.toFixed(2)}</span>
               </div>
             </div>
           </div>
