@@ -23,12 +23,13 @@ export function saveCart(cart: SavedCart) {
     window.dispatchEvent(new Event("wavedo:cart-updated"));
   } catch { /* Storage may be blocked. */ }
 }
-export function addToCart(size: string): SavedCart {
+export function addToCart(size: string, quantity = 1): SavedCart {
+  if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > maxQuantity) throw new Error("Choose a quantity from 1 to 99.");
   const selectedSize = cartSizes.includes(size) ? size : "M";
   const items = (readCart()?.items ?? []).map((item) => ({ ...item }));
   let selected = items.find((item) => item.size === selectedSize);
-  if (selected) selected.quantity = Math.min(maxQuantity, selected.quantity + 1);
-  else { selected = { size: selectedSize, quantity: 1 }; items.push(selected); }
+  if (selected) selected.quantity = Math.min(maxQuantity, selected.quantity + quantity);
+  else { selected = { size: selectedSize, quantity }; items.push(selected); }
   const next = { ...selected, items };
   saveCart(next);
   return next;
