@@ -1,6 +1,6 @@
 # Wavēdo landing
 
-Use Node.js 20.9+ (Node 22 LTS recommended). Install with `npm ci`, then `npm run dev`.
+Use Node.js 24 LTS (the version used in CI). Install with `npm ci`, then `npm run dev`.
 
 ## Intake notification setup
 
@@ -27,10 +27,23 @@ Run `npm run test:notifications` for isolated configuration and mocked provider 
 
 The cart creates a hosted Stripe Checkout Session at `POST /api/checkout`. It uses the $79.99 USD price, sizes XS–XXL, and shipping rule ($12 below $100; included at $100 or above). Each size is a separate line item. Amounts are calculated server-side in cents; client prices/totals are ignored. Shipping contact/address is attached to the PaymentIntent, email prefills Checkout, and size metadata is included on both the session and payment. Country accepts ISO two-letter codes (the previous United States default also works).
 
-Set the server-only `STRIPE_SECRET_KEY` in `.env.local` or the hosting environment and restart/redeploy. Start with a Stripe test-mode key from the existing Stripe account. No publishable key, SDK, new price IDs, or email configuration is required. The former `NEXT_PUBLIC_*_PAYMENT_LINK` settings cannot carry this order reliably and are no longer used. Configure eligible payment methods in Stripe; availability depends on the account, customer, and device. See [Stripe Checkout Session creation](https://docs.stripe.com/api/checkout/sessions/create).
+### Payment setup and release
 
-Without a valid key the endpoint returns HTTP 503 with `setupRequired: true` and a server-calculated preview. The cart displays that no payment or order was created, preserves edits, and allows retry. This fallback makes no provider requests and is safe to exercise locally. It is not a simulated successful payment. Provider failures also preserve the form/cart. A retry of unchanged content within the same page uses the same Stripe idempotency key; changed content uses a different key. Stripe's idempotency retention is finite, so this is not durable order deduplication.
+Keep all credentials server-only. Add the blank entries in .env.example to your existing local or Vercel settings without replacing existing values. Never use NEXT_PUBLIC_ for credentials.
 
-Run `npm run test:checkout`, `npm run test:notifications`, `npx tsc --noEmit`, and `npm run build`. The checkout tests mock Stripe and cover multi-size payloads, authoritative totals, invalid inputs, missing configuration, retries, and provider failures. For manual verification, add multiple sizes, adjust/remove quantities, reload the cart, fill shipping, and continue with the key unset to see the preview. With a test key, inspect line items and total in Checkout, cancel and verify the cart remains, then complete a test payment and verify the shipping address on its PaymentIntent in Stripe. Do not use a live card for this check.
+- STRIPE_SECRET_KEY: a test key for local/Preview; a live key for Vercel Production. The server rejects a key from the wrong mode.
+- STRIPE_WEBHOOK_SECRET: signing secret for this deployment's endpoint, from the same Stripe account/mode as its API key.
+- DATABASE_URL (or POSTGRES_URL): Neon Postgres connection string. Use a separate Preview database; the connection needs permission to create and write wavedo_orders.
+- RESEND_API_KEY, NOTIFICATION_TO_EMAIL, NOTIFICATION_FROM_EMAIL: see the notification guide above. Paid-order alerts use plain text and do not need an email template. Intake confirmations still need their existing template.
 
-Returning from Stripe is not treated as proof of payment and does not clear the cart or send an order email. Use Stripe's payment status/receipt for manual fulfillment. Automated fulfillment, durable orders, and cart clearing require a verified payment webhook and order storage, which this repository does not yet have. Deploy behind HTTPS and configure deployment-level rate limits for the public session endpoint.
+Create a Stripe webhook destination at https://YOUR-DEPLOYMENT/api/stripe/webhook for checkout.session.completed and checkout.session.async_payment_succeeded. Preview protection must allow Stripe to reach that route; do not disable protection for unrelated pages. Copy the destination's signing secret privately into the matching Vercel environment and redeploy. Register Production separately with live-mode credentials before promoting this branch.
+
+Checkout checks database availability and requires a webhook secret before opening payment. Only a verified, paid Stripe session with the expected items, currency, and total can be recorded. The table is created additively; session IDs are unique, so duplicate webhook delivery cannot create duplicate orders. Shipping is read from the verified PaymentIntent. The browser confirmation also records the paid order if the webhook is delayed, and checks an HttpOnly ownership cookie before returning any purchase details. Purchased quantities are removed once; later additions stay in the cart. An uncertain confirmation keeps the cart and asks the shopper to check again before paying again.
+
+The webhook sends the owner a paid-order alert after saving the order. Resend failures return a retryable error to Stripe; order persistence is independent of email delivery. Email retries use the session ID for idempotency. Unsent alerts older than 23 hours require manual review to avoid a duplicate email outside Resend's idempotency window. Review webhook failures and orders with notified_at unset. This is payment recording and notification, not shipping-label generation or refund management. Existing sessions created before this release remain manual fulfillment.
+
+Run npm run check:checkout for a values-free offline configuration check. It cannot prove that keys authenticate, that Stripe can reach the webhook, or that delivery works. Run npm run lint, npm run test:checkout, npm run test:payments, npm run test:notifications, and npm run build. CI runs these checks on pull requests and pushes to main without production secrets. Enable the verify job as a required branch-protection check in GitHub.
+
+Before production: complete a test payment on Preview; check its exact items, $79.99 unit price and shipping total, one database order, one test-marked alert, confirmation page, and cart behavior after reload. Replay the webhook to verify no duplicate order/email. Test cancellation and a declined card. Never enter a live card in this test. The automated suite mocks providers and does not make payments or send mail.
+
+Stripe's displayed business name comes from the Stripe account behind STRIPE_SECRET_KEY. Confirm that account and its public business/branding settings show Wavedo before release; a code change cannot rename a different account. Configure deployment-level rate limits on public checkout and notification endpoints.

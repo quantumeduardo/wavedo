@@ -2,7 +2,7 @@ const cartKey = "wavedo.cart.v1";
 import { cartSizes, maxQuantity } from "./checkout";
 export { cartSizes };
 export type CartItem = { size: string; quantity: number };
-export type SavedCart = CartItem & { items: CartItem[] };
+export type SavedCart = CartItem & { items: CartItem[]; paidSessions?: string[] };
 function validItem(value: CartItem) {
   return value && cartSizes.includes(value.size) && Number.isSafeInteger(value.quantity) && value.quantity > 0;
 }
@@ -12,14 +12,14 @@ export function readCart(): SavedCart | null {
     if (!value) return null;
     const items: CartItem[] = Array.isArray(value.items) ? value.items : [value];
     if (!items.every(validItem) || new Set(items.map((item) => item.size)).size !== items.length) return null;
-    if (!items.length) return { size: "M", quantity: 0, items: [] };
+    if (!items.length) return { size: "M", quantity: 0, items: [], paidSessions: value.paidSessions };
     const selected = items.find((item) => item.size === value.size) ?? items[0];
-    return { ...selected, items };
+    return { ...selected, items, paidSessions: value.paidSessions };
   } catch { return null; }
 }
 export function saveCart(cart: SavedCart) {
   try {
-    localStorage.setItem(cartKey, JSON.stringify(cart));
+    localStorage.setItem(cartKey, JSON.stringify({ ...cart, paidSessions: cart.paidSessions ?? readCart()?.paidSessions ?? [] }));
     window.dispatchEvent(new Event("wavedo:cart-updated"));
   } catch { /* Storage may be blocked. */ }
 }
@@ -33,4 +33,12 @@ export function addToCart(size: string, quantity = 1): SavedCart {
   const next = { ...selected, items };
   saveCart(next);
   return next;
+}
+
+// The purchased quantities and receipt marker are saved together so a refresh cannot subtract twice.
+export function consumePaidCart(sessionId: string, purchased: CartItem[]) {
+  const saved = readCart();
+  if (!saved || saved.paidSessions?.includes(sessionId)) return;
+  const items = saved.items.map(item => ({ ...item, quantity: item.quantity - (purchased.find(p => p.size === item.size)?.quantity ?? 0) })).filter(item => item.quantity > 0);
+  saveCart({ ...(items[0] ?? {size:"M", quantity:0}), items, paidSessions: [...(saved.paidSessions ?? []), sessionId] });
 }

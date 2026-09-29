@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 
 const programOptions = [
@@ -131,9 +132,9 @@ export function IntakeForm() {
         <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-bone/64">
           {notice}
         </p>
-        <a href="/" className="mt-8 inline-flex min-h-12 items-center justify-center border border-champagne px-8 text-sm font-semibold tracking-[0.2em] text-champagne transition hover:bg-champagne hover:text-ink">
+        <Link href="/" className="mt-8 inline-flex min-h-12 items-center justify-center border border-champagne px-8 text-sm font-semibold tracking-[0.2em] text-champagne transition hover:bg-champagne hover:text-ink">
           Back Home
-        </a>
+        </Link>
       </div>
     );
   }

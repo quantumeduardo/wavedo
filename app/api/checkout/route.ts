@@ -1,6 +1,9 @@
 import { createHash } from "node:crypto";
 import { stripeParameters, validateCheckout } from "@/lib/checkout";
 
+import { getStripe, tokenHash } from "@/lib/stripe-checkout";
+import { prepareOrders } from "@/lib/orders";
+
 export const runtime = "nodejs";
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 export async function POST(request: Request) {
@@ -18,7 +21,18 @@ export async function POST(request: Request) {
   if (!key || !/^(sk|rk)_(test|live)_[A-Za-z0-9]+$/.test(key)) {
     return json({ setupRequired: true, message: "Payments are temporarily unavailable. This is an order preview only; no order has been placed or payment taken.", preview: { items: order.items, ...{subtotal: order.subtotal, shipping: order.shipping, total: order.total, currency: order.currency} } }, 503);
   }
+  try {
+    getStripe();
+    if (!process.env.STRIPE_WEBHOOK_SECRET?.startsWith("whsec_")) throw new Error("webhook_configuration");
+    await prepareOrders();
+  } catch {
+    return json({ message: "Payments are temporarily unavailable. Your cart is saved; no payment has been taken." }, 503);
+  }
   const params = stripeParameters(order, origin);
+  params.set("success_url", origin + "/checkout/success?session_id={CHECKOUT_SESSION_ID}");
+  params.set("metadata[source]", "wavedo-cart-v2");
+  params.set("metadata[cart]", JSON.stringify(order.items));
+  params.set("metadata[owner]", tokenHash(order.attemptId));
   // Bind retries to both the attempt and its exact content. No PII in the key.
   const idempotencyKey = createHash("sha256").update(order.attemptId + params.toString()).digest("hex");
   try {
@@ -31,7 +45,9 @@ export async function POST(request: Request) {
     const session = await response.json();
     const url = new URL(session.url);
     if (url.protocol !== "https:" || url.hostname !== "checkout.stripe.com" || url.username || url.password) throw new Error("Invalid checkout URL");
-    return json({ url: url.href });
+    const result = json({ url: url.href });
+    result.headers.set("Set-Cookie", "wavedo-checkout-owner=" + order.attemptId + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800" + (origin.startsWith("https:") ? "; Secure" : ""));
+    return result;
   } catch {
     return json({ message: "Could not open payment checkout. Your cart is saved; please try again." }, 502);
   }

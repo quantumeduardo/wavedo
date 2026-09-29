@@ -20,6 +20,8 @@ export function Cart({ initialSize }: CartProps) {
   const [items, setItems] = useState<CartItem[]>([]);
   useEffect(() => {
     const saved = readCart();
+    // Restore browser-only storage after hydration; server rendering must start empty.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setItems(saved?.items ?? (initialSize && sizes.includes(initialSize) ? [{ size: initialSize, quantity: 1 }] : []));
     setCartReady(true);
   }, [initialSize]);
@@ -40,6 +42,8 @@ export function Cart({ initialSize }: CartProps) {
   const attempt = useRef("");
   useEffect(() => {
     const status = new URLSearchParams(window.location.search).get("checkout");
+    // Read the browser return URL after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (status === "cancelled") setMessage("Payment checkout was cancelled. Your cart is saved.");
     if (status === "returned") setMessage("You returned from payment checkout. Check your Stripe receipt for payment status. Your cart has been kept for reference; do not pay again if already paid.");
   }, []);

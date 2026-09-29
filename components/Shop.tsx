@@ -40,6 +40,8 @@ export function Shop() {
   const remaining = Math.max(0, maxQuantity - (existingItems.find(item => item.size === selectedSize)?.quantity ?? 0));
   useEffect(() => {
     const saved = readCart();
+    // Restore browser-only storage after hydration; server rendering must start empty.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved) { setSelectedSize(saved.size); setExistingItems(saved.items); }
   }, []);
   const activePreview = productPreviews[activePreviewIndex];

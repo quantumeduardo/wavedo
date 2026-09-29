@@ -68,12 +68,12 @@ const nutritionOptions = [
 function Rating({ label, name, low, high }: { label: string; name: string; low: string; high: string }) {
   const errors = useContext(ValidationContext);
   return (
-    <fieldset className="min-w-0">
+    <fieldset className="min-w-0" aria-invalid={!!errors[name]}>
       <legend className="mb-4 text-base text-bone">{label}</legend>
       <div className="grid grid-cols-5 gap-2 sm:grid-cols-10">
         {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
           <label key={value} className="relative cursor-pointer">
-            <input required type="radio" name={name} value={`${value}/10 (1 = ${low}; 10 = ${high})`} aria-invalid={!!errors[name]} aria-describedby={errors[name] ? `${name}-error` : undefined} aria-label={`${value} out of 10`} className="peer sr-only" />
+            <input required type="radio" name={name} value={`${value}/10 (1 = ${low}; 10 = ${high})`} aria-describedby={errors[name] ? `${name}-error` : undefined} aria-label={`${value} out of 10`} className="peer sr-only" />
             <span className="flex min-h-12 items-center justify-center rounded-xl border border-bone/15 text-sm text-bone/70 transition hover:border-champagne peer-checked:border-champagne peer-checked:bg-champagne peer-checked:text-ink peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-champagne">{value}</span>
           </label>
         ))}
