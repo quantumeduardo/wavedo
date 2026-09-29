@@ -40,7 +40,7 @@ export function sessionParameters(items: CheckoutItem[], origin: string, owner: 
     mode: "payment",
     payment_method_types: ["card"],
     line_items: items.map((item) => ({
-      price_data: { currency: "usd", unit_amount: hoodiePrice, product_data: { name: `Wavēdo Training Hoodie — ${item.size}`, metadata: { size: item.size } } },
+      price_data: { currency: "usd", unit_amount: hoodiePrice, product_data: { name: `Wavedo 520 — ${item.size}`, metadata: { size: item.size } } },
       quantity: item.quantity,
     })),
     shipping_address_collection: { allowed_countries: ["US"] },

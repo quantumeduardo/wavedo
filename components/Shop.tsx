@@ -6,36 +6,26 @@ import { coachingUrl } from "@/lib/site-links";
 import { useEffect, useState } from "react";
 
 const shopItem = {
-  name: "Wavēdo Training Hoodie",
+  name: "Wavedo 520",
   price: "$100",
   eyebrow: "Limited Drop 01",
   description:
-    "Dark bottle-green black performance fleece with a subtle off-white splatter finish and cream Wavēdo embroidery near the lower pocket seam.",
-  color: "Bottle Green / Black",
-  includes: ["Performance fleece", "Athletic warmup fit", "Ribbed cuffs and waistline", "Cream embroidered Wavēdo mark"],
+    "Heavyweight 520 GSM, 100% organic cotton. A clean, baggy silhouette with dropped shoulders, ribbed wrists and waist, and a kangaroo pocket finished with the cream Wavēdo logo.",
+  color: "Jet Black",
+  includes: ["520 GSM heavyweight fabric", "100% organic cotton", "Baggy fit with dropped shoulders", "Ribbed wrists and waist"],
   checkoutUrl: "/cart",
 };
 
 const productPreviews = [
   {
-    label: "Look 01",
-    src: "/images/wavedo-hoodie-fitness-robot.png",
-    alt: "Fitness robot model wearing the Wavēdo training hoodie",
-  },
-  {
-    label: "Look 02",
-    src: "/images/wavedo-hoodie-fitness-robot-walk.png",
-    alt: "Fitness robot model walking in the Wavēdo training hoodie",
-  },
-  {
     label: "Front",
-    src: "/images/wavedo-hoodie-front.png",
-    alt: "Wavēdo paint-splatter hoodie front product image",
+    src: "/images/wavedo-hoodie-jet-black-front.png",
+    alt: "Jet-black Wavedo 520 GSM hoodie with cream pocket logo, front view",
   },
   {
     label: "Back",
-    src: "/images/wavedo-hoodie-back.png",
-    alt: "Wavēdo training hoodie back product image",
+    src: "/images/wavedo-hoodie-jet-black-back.png",
+    alt: "Wavedo 520 hoodie back product image",
   },
 ];
 
@@ -43,7 +33,7 @@ const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
 export function Shop() {
   const [focusedPreviewIndex, setFocusedPreviewIndex] = useState<number | null>(null);
-  const [activePreviewIndex, setActivePreviewIndex] = useState(2);
+  const [activePreviewIndex, setActivePreviewIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState("M");
   useEffect(() => {
     const saved = readCart();
@@ -109,7 +99,7 @@ export function Shop() {
       <div className="mx-auto w-full max-w-[480px]">
         <button type="button" onClick={() => setFocusedPreviewIndex(activePreviewIndex)} className="group relative block aspect-square w-full overflow-hidden bg-black" aria-label={`Zoom ${activePreview.label} product image`}>
           <Image src={activePreview.src} alt={activePreview.alt} fill priority unoptimized sizes="(max-width: 520px) 100vw, 480px" className="object-contain transition-transform duration-500 group-hover:scale-105" />
-          <span className="absolute bottom-4 right-4 text-xs text-white">＋</span>
+          <span className="absolute bottom-4 right-4 bg-white px-2 py-1 text-xs text-black">＋</span>
         </button>
         <div className="mt-3 flex items-center justify-between text-[10px] uppercase text-bone/60">
           <button type="button" onClick={showPreviousPreview} aria-label="Previous hoodie image" className="min-h-11 px-2">←</button>
@@ -156,7 +146,7 @@ export function Shop() {
           onClick={() => setFocusedPreviewIndex(null)}
         >
           <div
-            className="relative h-[86svh] w-full max-w-6xl overflow-hidden bg-[#030303] pb-20 sm:h-[88vh] sm:pb-0"
+            className="relative h-[86svh] w-full max-w-6xl overflow-hidden bg-white pb-20 sm:h-[88vh] sm:pb-0"
             onClick={(event) => event.stopPropagation()}
           >
             <Image
@@ -166,20 +156,20 @@ export function Shop() {
               unoptimized
               className="object-contain"
             />
-            <div className="absolute left-3 top-3 max-w-[58vw] bg-black/72 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-bone/70 sm:left-5 sm:top-5 sm:max-w-none sm:px-4 sm:tracking-[0.28em]">
+            <div className="absolute left-3 top-3 max-w-[58vw] bg-white px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-black sm:left-5 sm:top-5 sm:max-w-none sm:px-4 sm:tracking-[0.28em]">
               {focusedPreview.label} / 0{focusedPreviewPosition} of 0{productPreviews.length}
             </div>
             <button
               type="button"
               onClick={() => setFocusedPreviewIndex(null)}
-              className="absolute right-3 top-3 border border-bone/25 bg-black/72 px-3 py-2 text-xs uppercase tracking-[0.16em] text-bone transition hover:border-champagne hover:text-champagne sm:right-5 sm:top-5 sm:px-4 sm:tracking-[0.24em]"
+              className="absolute right-3 top-3 border border-black/30 bg-white px-3 py-2 text-xs uppercase tracking-[0.16em] text-black transition hover:border-black hover:bg-gray-100 sm:right-5 sm:top-5 sm:px-4 sm:tracking-[0.24em]"
             >
               Close
             </button>
             <button
               type="button"
               onClick={showPreviousFocusedPreview}
-              className="absolute bottom-5 left-4 min-h-11 border border-bone/25 bg-black/72 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-bone transition hover:border-champagne hover:text-champagne sm:top-1/2 sm:min-h-12 sm:-translate-y-1/2 sm:tracking-[0.22em]"
+              className="absolute bottom-5 left-4 min-h-11 border border-black/30 bg-white px-4 text-xs font-semibold uppercase tracking-[0.16em] text-black transition hover:border-black hover:bg-gray-100 sm:bottom-auto sm:top-1/2 sm:min-h-12 sm:-translate-y-1/2 sm:tracking-[0.22em]"
               aria-label="Previous zoomed hoodie image"
             >
               Prev
@@ -187,19 +177,19 @@ export function Shop() {
             <button
               type="button"
               onClick={showNextFocusedPreview}
-              className="absolute bottom-5 right-4 min-h-11 border border-bone/25 bg-black/72 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-bone transition hover:border-champagne hover:text-champagne sm:top-1/2 sm:min-h-12 sm:-translate-y-1/2 sm:tracking-[0.22em]"
+              className="absolute bottom-5 right-4 min-h-11 border border-black/30 bg-white px-4 text-xs font-semibold uppercase tracking-[0.16em] text-black transition hover:border-black hover:bg-gray-100 sm:bottom-auto sm:top-1/2 sm:min-h-12 sm:-translate-y-1/2 sm:tracking-[0.22em]"
               aria-label="Next zoomed hoodie image"
             >
               Next
             </button>
-            <div className="absolute bottom-[4.75rem] left-1/2 flex -translate-x-1/2 gap-2 bg-black/64 px-3 py-2 sm:bottom-5">
+            <div className="absolute bottom-[4.75rem] left-1/2 flex -translate-x-1/2 gap-2 bg-white px-3 py-2 sm:bottom-5">
               {productPreviews.map((preview, index) => (
                 <button
                   key={preview.label}
                   type="button"
                   onClick={() => setFocusedPreviewIndex(index)}
                   className={`h-2.5 w-8 transition ${
-                    index === focusedPreviewIndex ? "bg-champagne" : "bg-bone/24 hover:bg-bone/50"
+                    index === focusedPreviewIndex ? "bg-black" : "bg-gray-300 hover:bg-gray-500"
                   }`}
                   aria-label={`Zoom ${preview.label}`}
                   aria-current={index === focusedPreviewIndex}
